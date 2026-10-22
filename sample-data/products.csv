@@ -1,0 +1,257 @@
+Category,Product Name,Brand,Size,Sold By,VAT Code,Sell Price,Barcode,Case Barcode,Case Units,Till Code,Reorder Point,Reorder Qty
+Fresh Produce > Fruit,Bananas,,Loose,kg,Z,0.98,,,18,1001,44,54
+Fresh Produce > Fruit,Gala Apples,,Loose,kg,Z,2.40,,,12,1002,12,12
+Fresh Produce > Fruit,Easy Peeler Clementines,Greenfurrow,600g,each,Z,1.65,5061200000011,15061200000018,10,,20,20
+Fresh Produce > Fruit,Red Seedless Grapes,Greenfurrow,500g,each,Z,2.25,5061200000028,15061200000025,10,,18,20
+Fresh Produce > Fruit,Strawberries,Greenfurrow,400g,each,Z,2.50,5061200000035,15061200000032,10,,20,20
+Fresh Produce > Fruit,Blueberries,Greenfurrow,150g,each,Z,1.99,5061200000042,15061200000049,12,,14,24
+Fresh Produce > Fruit,Lemons,Greenfurrow,4 pack,each,Z,1.00,5061200000059,15061200000056,12,,10,12
+Fresh Produce > Fruit,Ripe Avocados,Greenfurrow,2 pack,each,Z,1.89,5061200000066,15061200000063,10,,10,10
+Fresh Produce > Fruit,Pineapple,Greenfurrow,Each,each,Z,1.40,5061200000073,15061200000070,8,,4,8
+Fresh Produce > Fruit,Conference Pears,Greenfurrow,4 pack,each,Z,1.75,5061200000080,15061200000087,10,,6,10
+Fresh Produce > Vegetables,White Potatoes,Greenfurrow,2.5kg,each,Z,1.79,5061200000097,15061200000094,6,,16,18
+Fresh Produce > Vegetables,Carrots,Greenfurrow,1kg,each,Z,0.85,5061200000103,15061200000100,10,,16,20
+Fresh Produce > Vegetables,Brown Onions,,Loose,kg,Z,1.20,,,10,1003,10,10
+Fresh Produce > Vegetables,Sweet Potatoes,,Loose,kg,Z,1.90,,,10,1004,6,10
+Fresh Produce > Vegetables,Broccoli,Greenfurrow,Each,each,Z,0.89,5061200000110,15061200000117,10,,18,20
+Fresh Produce > Vegetables,Cucumber,Greenfurrow,Each,each,Z,0.85,5061200000127,15061200000124,12,,16,24
+Fresh Produce > Vegetables,Iceberg Lettuce,Greenfurrow,Each,each,Z,0.95,5061200000134,15061200000131,10,,10,10
+Fresh Produce > Vegetables,Salad Tomatoes,Greenfurrow,6 pack,each,Z,1.15,5061200000141,15061200000148,10,,16,20
+Fresh Produce > Vegetables,Cherry Tomatoes,Greenfurrow,250g,each,Z,1.25,5061200000158,15061200000155,10,,14,20
+Fresh Produce > Vegetables,Closed Cup Mushrooms,Greenfurrow,300g,each,Z,1.29,5061200000165,15061200000162,10,,14,20
+Fresh Produce > Vegetables,Mixed Peppers,Greenfurrow,3 pack,each,Z,1.75,5061200000172,15061200000179,10,,12,20
+Fresh Produce > Vegetables,Garlic,Greenfurrow,4 pack,each,Z,0.89,5061200000189,15061200000186,10,,6,10
+Fresh Produce > Vegetables,Spring Onions,Greenfurrow,Bunch,each,Z,0.69,5061200000196,15061200000193,12,,6,12
+Fresh Produce > Vegetables,Baby Spinach,Greenfurrow,200g,each,Z,1.50,5061200000202,15061200000209,8,,6,8
+Fresh Produce > Vegetables,Mixed Leaf Salad,Greenfurrow,120g,each,Z,1.00,5061200000219,15061200000216,10,,8,10
+Bakery > Bread & Rolls,White Sliced Bread,Hearthstone,800g,each,Z,1.45,5061237000015,15061237000012,12,,50,60
+Bakery > Bread & Rolls,Wholemeal Sliced Bread,Hearthstone,800g,each,Z,1.55,5061237000022,15061237000029,12,,28,36
+Bakery > Bread & Rolls,Thick Sliced White Bread,Hearthstone,800g,each,Z,1.45,5061237000039,15061237000036,12,,20,24
+Bakery > Bread & Rolls,Seeded Batch Loaf,Hearthstone,800g,each,Z,1.95,5061237000046,15061237000043,12,,12,12
+Bakery > Bread & Rolls,White Bread Rolls,Hearthstone,6 pack,each,Z,1.10,5061237000053,15061237000050,12,,16,24
+Bakery > Bread & Rolls,Plain Tortilla Wraps,Hearthstone,8 pack,each,Z,1.60,5061237000060,15061237000067,12,,10,12
+Bakery > Bread & Rolls,Crumpets,Hearthstone,6 pack,each,Z,0.95,5061237000077,15061237000074,12,,12,12
+Bakery > Bread & Rolls,All Butter Croissants,Hearthstone,4 pack,each,Z,1.75,5061237000084,15061237000081,10,,10,10
+Bakery > Bread & Rolls,Fruited Teacakes,Hearthstone,4 pack,each,Z,1.20,5061237000091,15061237000098,12,,4,12
+Bakery > Bread & Rolls,Plain Bagels,Hearthstone,5 pack,each,Z,1.40,5061237000107,15061237000104,12,,6,12
+Bakery > Bread & Rolls,White Bread,Thrift & Co,800g,each,Z,0.75,5061274000016,15061274000013,12,,18,24
+Bakery > Bread & Rolls,Jam Doughnut,,Each,each,Z,0.60,,,12,1005,12,12
+Bakery > Cakes,Chocolate Sponge Roll,Hearthstone,Each,each,Z,1.65,5061237000114,15061237000111,12,,4,12
+Bakery > Cakes,Victoria Sponge Cake,Hearthstone,Each,each,Z,2.75,5061237000121,15061237000128,6,,2,6
+Bakery > Cakes,Lemon Drizzle Slices,Hearthstone,6 pack,each,Z,1.50,5061237000138,15061237000135,12,,4,12
+Bakery > Cakes,Christmas Pudding,Hearthstone,454g,each,Z,3.50,5061237000145,15061237000142,6,,0,6
+Dairy & Eggs > Milk & Cream,Semi-Skimmed Milk,Brookmere Dairy,2L,each,Z,1.75,5061311000016,15061311000013,8,,76,80
+Dairy & Eggs > Milk & Cream,Semi-Skimmed Milk,Brookmere Dairy,1L,each,Z,1.10,5061311000023,15061311000020,12,,24,24
+Dairy & Eggs > Milk & Cream,Whole Milk,Brookmere Dairy,2L,each,Z,1.75,5061311000030,15061311000037,8,,28,32
+Dairy & Eggs > Milk & Cream,Skimmed Milk,Brookmere Dairy,2L,each,Z,1.75,5061311000047,15061311000044,8,,12,16
+Dairy & Eggs > Milk & Cream,Oat Drink,Oatfield,1L,each,S,1.80,5061348000010,15061348000017,6,,8,12
+Dairy & Eggs > Milk & Cream,Double Cream,Brookmere Dairy,300ml,each,Z,1.40,5061311000054,15061311000051,12,,8,12
+Dairy & Eggs > Milk & Cream,Single Cream,Brookmere Dairy,300ml,each,Z,1.25,5061311000061,15061311000068,12,,4,12
+Dairy & Eggs > Cheese,Mature Cheddar,Fellside,400g,each,Z,4.25,5061385000011,15061385000018,12,,18,24
+Dairy & Eggs > Cheese,Mild Cheddar,Fellside,400g,each,Z,3.95,5061385000028,15061385000025,12,,10,12
+Dairy & Eggs > Cheese,Grated Mozzarella & Cheddar,Fellside,250g,each,Z,2.50,5061385000035,15061385000032,10,,8,10
+Dairy & Eggs > Cheese,Mozzarella,Fellside,125g,each,Z,0.95,5061385000042,15061385000049,12,,10,12
+Dairy & Eggs > Cheese,Halloumi,Fellside,225g,each,Z,2.75,5061385000059,15061385000056,10,,4,10
+Dairy & Eggs > Cheese,Cheese Slices,Fellside,10 pack,each,Z,1.85,5061385000066,15061385000063,12,,6,12
+Dairy & Eggs > Cheese,Soft Cheese,Fellside,180g,each,Z,1.30,5061385000073,15061385000070,12,,8,12
+Dairy & Eggs > Cheese,Italian Hard Cheese,Fellside,100g,each,Z,2.40,5061385000080,15061385000087,10,,1,10
+Dairy & Eggs > Yoghurts & Desserts,Greek Style Yoghurt,Larkspur Farm,500g,each,Z,1.80,5061422000011,15061422000018,6,,12,12
+Dairy & Eggs > Yoghurts & Desserts,Natural Yoghurt,Larkspur Farm,500g,each,Z,1.10,5061422000028,15061422000025,6,,6,6
+Dairy & Eggs > Yoghurts & Desserts,Fruit Yoghurts,Larkspur Farm,4 x 120g,each,Z,1.60,5061422000035,15061422000032,6,,12,12
+Dairy & Eggs > Yoghurts & Desserts,Strawberry Fromage Frais,Larkspur Farm,6 x 45g,each,Z,1.50,5061422000042,15061422000049,6,,6,6
+Dairy & Eggs > Yoghurts & Desserts,Chocolate Mousse,Larkspur Farm,4 pack,each,Z,1.30,5061422000059,15061422000056,6,,4,6
+Dairy & Eggs > Butter & Spreads,Salted Butter,Brookmere Dairy,250g,each,Z,2.35,5061311000078,15061311000075,20,,20,20
+Dairy & Eggs > Butter & Spreads,Unsalted Butter,Brookmere Dairy,250g,each,Z,2.35,5061311000085,15061311000082,20,,4,20
+Dairy & Eggs > Butter & Spreads,Spreadable Butter,Brookmere Dairy,500g,each,Z,3.50,5061311000092,15061311000099,12,,12,12
+Dairy & Eggs > Butter & Spreads,Sunflower Spread,Brookmere Dairy,500g,each,Z,1.60,5061311000108,15061311000105,12,,8,12
+Dairy & Eggs > Eggs,Free Range Medium Eggs,Hillside Hens,6 pack,each,Z,2.10,5061459000015,15061459000012,12,,28,36
+Dairy & Eggs > Eggs,Free Range Large Eggs,Hillside Hens,12 pack,each,Z,3.85,5061459000022,15061459000029,6,,12,12
+Dairy & Eggs > Eggs,Mixed Weight Eggs,Thrift & Co,15 pack,each,Z,2.75,5061274000023,15061274000020,6,,8,12
+Meat & Fish > Fresh Meat,Chicken Breast Fillets,Copperfield,650g,each,Z,4.99,5061496000016,15061496000013,8,,36,88
+Meat & Fish > Fresh Meat,Whole Chicken,Copperfield,1.5kg,each,Z,4.75,5061496000023,15061496000020,6,,12,30
+Meat & Fish > Fresh Meat,Chicken Thighs,Copperfield,1kg,each,Z,3.25,5061496000030,15061496000037,8,,15,40
+Meat & Fish > Fresh Meat,Lean Beef Mince 5% Fat,Copperfield,500g,each,Z,4.50,5061496000047,15061496000044,10,,27,70
+Meat & Fish > Fresh Meat,Beef Mince 20% Fat,Copperfield,500g,each,Z,2.85,5061496000054,15061496000051,10,,21,50
+Meat & Fish > Fresh Meat,Diced Beef,Copperfield,400g,each,Z,4.75,5061496000061,15061496000068,8,,9,24
+Meat & Fish > Fresh Meat,Pork Sausages,Copperfield,8 pack,each,Z,2.75,5061496000078,15061496000075,12,,30,72
+Meat & Fish > Fresh Meat,Smoked Back Bacon,Copperfield,300g,each,Z,3.25,5061496000085,15061496000082,12,,30,72
+Meat & Fish > Fresh Meat,Unsmoked Back Bacon,Copperfield,300g,each,Z,3.25,5061496000092,15061496000099,12,,15,36
+Meat & Fish > Fresh Meat,Pork Loin Steaks,Copperfield,4 pack,each,Z,3.95,5061496000108,15061496000105,8,,9,24
+Meat & Fish > Fresh Meat,Lamb Mince,Copperfield,500g,each,Z,4.75,5061496000115,15061496000112,8,,6,16
+Meat & Fish > Fresh Meat,Beef Burgers,Copperfield,4 pack,each,Z,3.20,5061496000122,15061496000129,10,,12,30
+Meat & Fish > Cooked Meats,Cooked Ham Slices,Copperfield,125g,each,Z,1.60,5061496000139,15061496000136,12,,27,72
+Meat & Fish > Cooked Meats,Cooked Chicken Slices,Copperfield,100g,each,Z,1.80,5061496000146,15061496000143,12,,15,36
+Meat & Fish > Cooked Meats,Pepperoni Slices,Copperfield,70g,each,Z,1.35,5061496000153,15061496000150,12,,9,24
+Meat & Fish > Cooked Meats,Scotch Eggs,Copperfield,2 pack,each,Z,1.75,5061496000160,15061496000167,12,,6,24
+Meat & Fish > Fish,Salmon Fillets,Tidewater,2 pack,each,Z,4.25,5061533000016,15061533000013,8,,12,32
+Meat & Fish > Fish,Smoked Salmon,Tidewater,100g,each,Z,3.00,5061533000023,15061533000020,10,,6,20
+Meat & Fish > Fish,Cooked King Prawns,Tidewater,150g,each,Z,2.75,5061533000030,15061533000037,10,,6,20
+Chilled > Ready Meals & Dips,Beef Lasagne,Weeknight Kitchen,400g,each,Z,3.50,5061570000017,15061570000014,6,,20,36
+Chilled > Ready Meals & Dips,Chicken Tikka Masala with Rice,Weeknight Kitchen,450g,each,Z,3.75,5061570000024,15061570000021,6,,16,30
+Chilled > Ready Meals & Dips,Cottage Pie,Weeknight Kitchen,400g,each,Z,3.25,5061570000031,15061570000038,6,,12,24
+Chilled > Ready Meals & Dips,Macaroni Cheese,Weeknight Kitchen,400g,each,Z,3.00,5061570000048,15061570000045,6,,12,24
+Chilled > Ready Meals & Dips,Margherita Pizza,Weeknight Kitchen,10 inch,each,Z,3.00,5061570000055,15061570000052,6,,16,30
+Chilled > Ready Meals & Dips,Tomato & Basil Soup,Weeknight Kitchen,600g,each,Z,2.25,5061570000062,15061570000069,6,,12,24
+Chilled > Ready Meals & Dips,Classic Hummus,Weeknight Kitchen,200g,each,Z,1.10,5061570000079,15061570000076,12,,24,48
+Chilled > Ready Meals & Dips,Coleslaw,Weeknight Kitchen,300g,each,Z,0.95,5061570000086,15061570000083,12,,16,36
+Frozen > Vegetables & Chips,Garden Peas,Frostholm,1kg,each,Z,1.50,5061607000010,15061607000017,10,,20,40
+Frozen > Vegetables & Chips,Mixed Vegetables,Frostholm,1kg,each,Z,1.40,5061607000027,15061607000024,10,,8,20
+Frozen > Vegetables & Chips,Straight Cut Oven Chips,Frostholm,1.5kg,each,Z,2.50,5061607000034,15061607000031,8,,24,48
+Frozen > Vegetables & Chips,Potato Waffles,Frostholm,10 pack,each,Z,2.20,5061607000041,15061607000048,10,,8,20
+"Frozen > Meat, Fish & Pizza",Breaded Fish Fillets,Frostholm,4 pack,each,Z,3.25,5061607000058,15061607000055,10,,12,30
+"Frozen > Meat, Fish & Pizza",Fish Fingers,Frostholm,10 pack,each,Z,2.25,5061607000065,15061607000062,12,,16,36
+"Frozen > Meat, Fish & Pizza",Chicken Nuggets,Frostholm,400g,each,Z,2.50,5061607000072,15061607000079,10,,12,30
+"Frozen > Meat, Fish & Pizza",Quarter Pounder Burgers,Frostholm,4 pack,each,Z,2.75,5061607000089,15061607000086,10,,8,20
+"Frozen > Meat, Fish & Pizza",Pepperoni Pizza,Frostholm,400g,each,Z,2.50,5061607000096,15061607000093,8,,16,32
+"Frozen > Meat, Fish & Pizza",Cheese & Tomato Pizza,Frostholm,400g,each,Z,2.20,5061607000102,15061607000109,8,,12,24
+Frozen > Ice Cream & Desserts,Vanilla Ice Cream,Frostholm,2L,each,S,2.75,5061607000119,15061607000116,6,,12,24
+Frozen > Ice Cream & Desserts,Chocolate Ice Cream Cones,Frostholm,4 pack,each,S,2.50,5061607000126,15061607000123,8,,8,16
+Frozen > Ice Cream & Desserts,Fruit Ice Lollies,Frostholm,10 pack,each,S,2.00,5061607000133,15061607000130,8,,8,16
+Food Cupboard > Tins & Jars,Baked Beans in Tomato Sauce,Pantry Lane,415g,each,Z,0.90,5061644000011,15061644000018,24,,72,144
+Food Cupboard > Tins & Jars,Baked Beans,Thrift & Co,410g,each,Z,0.40,5061274000030,15061274000037,24,,32,72
+Food Cupboard > Tins & Jars,Chopped Tomatoes,Pantry Lane,400g,each,Z,0.60,5061644000028,15061644000025,24,,40,72
+Food Cupboard > Tins & Jars,Tuna Chunks in Brine,Pantry Lane,145g,each,Z,1.35,5061644000035,15061644000032,24,,28,72
+Food Cupboard > Tins & Jars,Cream of Tomato Soup,Pantry Lane,400g,each,Z,1.10,5061644000042,15061644000049,24,,24,48
+Food Cupboard > Tins & Jars,Sweetcorn,Pantry Lane,326g,each,Z,0.80,5061644000059,15061644000056,24,,16,48
+Food Cupboard > Tins & Jars,Red Kidney Beans,Pantry Lane,400g,each,Z,0.65,5061644000066,15061644000063,24,,12,24
+Food Cupboard > Tins & Jars,Chickpeas,Pantry Lane,400g,each,Z,0.70,5061644000073,15061644000070,24,,12,24
+Food Cupboard > Tins & Jars,Spaghetti Hoops,Pantry Lane,410g,each,Z,0.75,5061644000080,15061644000087,24,,16,48
+Food Cupboard > Tins & Jars,Corned Beef,Pantry Lane,340g,each,Z,3.25,5061644000097,15061644000094,12,,2,12
+Food Cupboard > Tins & Jars,Peach Slices in Juice,Pantry Lane,410g,each,Z,0.95,5061644000103,15061644000100,24,,6,24
+Food Cupboard > Tins & Jars,Creamed Rice Pudding,Pantry Lane,400g,each,Z,0.95,5061644000110,15061644000117,12,,8,24
+"Food Cupboard > Pasta, Rice & Noodles",Fusilli Pasta,Pantry Lane,500g,each,Z,0.95,5061644000127,15061644000124,12,,32,60
+"Food Cupboard > Pasta, Rice & Noodles",Spaghetti,Pantry Lane,500g,each,Z,0.95,5061644000134,15061644000131,12,,28,60
+"Food Cupboard > Pasta, Rice & Noodles",Spaghetti,Thrift & Co,500g,each,Z,0.45,5061274000047,15061274000044,12,,20,36
+"Food Cupboard > Pasta, Rice & Noodles",Long Grain Rice,Pantry Lane,1kg,each,Z,1.40,5061644000141,15061644000148,12,,16,36
+"Food Cupboard > Pasta, Rice & Noodles",Basmati Rice,Pantry Lane,1kg,each,Z,2.40,5061644000158,15061644000155,12,,16,36
+"Food Cupboard > Pasta, Rice & Noodles",Microwave Pilau Rice,Pantry Lane,250g,each,Z,1.25,5061644000165,15061644000162,12,,20,36
+"Food Cupboard > Pasta, Rice & Noodles",Chicken Instant Noodles,Pantry Lane,70g,each,Z,0.50,5061644000172,15061644000179,24,,32,72
+"Food Cupboard > Pasta, Rice & Noodles",Medium Egg Noodles,Pantry Lane,250g,each,Z,1.10,5061644000189,15061644000186,12,,8,24
+Food Cupboard > Breakfast & Spreads,Cornflakes,Pantry Lane,500g,each,Z,2.25,5061644000196,15061644000193,10,,20,40
+Food Cupboard > Breakfast & Spreads,Porridge Oats,Pantry Lane,1kg,each,Z,1.50,5061644000202,15061644000209,10,,16,30
+Food Cupboard > Breakfast & Spreads,Wheat Biscuits,Pantry Lane,24 pack,each,Z,3.00,5061644000219,15061644000216,10,,16,30
+Food Cupboard > Breakfast & Spreads,Crunchy Granola,Pantry Lane,500g,each,Z,2.75,5061644000226,15061644000223,10,,8,20
+Food Cupboard > Breakfast & Spreads,Chocolate Hoops,Pantry Lane,375g,each,Z,2.50,5061644000233,15061644000230,10,,12,30
+Food Cupboard > Breakfast & Spreads,Strawberry Jam,Pantry Lane,454g,each,Z,1.40,5061644000240,15061644000247,12,,8,24
+Food Cupboard > Breakfast & Spreads,Smooth Peanut Butter,Pantry Lane,340g,each,Z,2.10,5061644000257,15061644000254,12,,8,24
+Food Cupboard > Breakfast & Spreads,Squeezy Honey,Pantry Lane,340g,each,Z,2.50,5061644000264,15061644000261,12,,6,12
+"Food Cupboard > Tea, Coffee & Hot Drinks",Tea Bags,Morning Kettle,80 pack,each,Z,2.60,5061681000012,15061681000019,12,,24,48
+"Food Cupboard > Tea, Coffee & Hot Drinks",Tea Bags,Morning Kettle,240 pack,each,Z,6.50,5061681000029,15061681000026,6,,8,18
+"Food Cupboard > Tea, Coffee & Hot Drinks",Tea Bags,Thrift & Co,80 pack,each,Z,1.15,5061274000054,15061274000051,12,,16,36
+"Food Cupboard > Tea, Coffee & Hot Drinks",Instant Coffee Granules,Roastery Row,200g,each,Z,6.50,5061718000015,15061718000012,6,,12,24
+"Food Cupboard > Tea, Coffee & Hot Drinks",Ground Coffee Medium Roast,Roastery Row,227g,each,Z,3.75,5061718000022,15061718000029,6,,6,12
+"Food Cupboard > Tea, Coffee & Hot Drinks",Hot Chocolate,Morning Kettle,400g,each,Z,2.75,5061681000036,15061681000033,6,,6,12
+Food Cupboard > Baking & Cooking,Granulated Sugar,Pantry Lane,1kg,each,Z,1.10,5061644000271,15061644000278,10,,16,30
+Food Cupboard > Baking & Cooking,Plain Flour,Pantry Lane,1.5kg,each,Z,1.05,5061644000288,15061644000285,10,,8,20
+Food Cupboard > Baking & Cooking,Self Raising Flour,Pantry Lane,1.5kg,each,Z,1.05,5061644000295,15061644000292,10,,8,20
+Food Cupboard > Baking & Cooking,Sunflower Oil,Pantry Lane,1L,each,Z,2.10,5061644000301,15061644000308,12,,12,24
+Food Cupboard > Baking & Cooking,Olive Oil,Pantry Lane,500ml,each,Z,4.50,5061644000318,15061644000315,6,,3,6
+Food Cupboard > Baking & Cooking,Table Salt,Pantry Lane,750g,each,Z,0.65,5061644000325,15061644000322,12,,4,12
+Food Cupboard > Baking & Cooking,Gravy Granules,Pantry Lane,300g,each,Z,2.20,5061644000332,15061644000339,12,,12,24
+Food Cupboard > Baking & Cooking,Chicken Stock Cubes,Pantry Lane,12 pack,each,Z,1.10,5061644000349,15061644000346,12,,8,24
+Food Cupboard > Sauces & Condiments,Tomato Ketchup,Pantry Lane,460g,each,Z,1.95,5061644000356,15061644000353,12,,20,36
+Food Cupboard > Sauces & Condiments,Mayonnaise,Pantry Lane,400ml,each,Z,2.25,5061644000363,15061644000360,12,,16,36
+Food Cupboard > Sauces & Condiments,Brown Sauce,Pantry Lane,450g,each,Z,1.80,5061644000370,15061644000377,12,,6,12
+Food Cupboard > Sauces & Condiments,Tomato & Basil Pasta Sauce,Pantry Lane,500g,each,Z,1.45,5061644000387,15061644000384,12,,20,36
+Food Cupboard > Sauces & Condiments,Tikka Masala Cooking Sauce,Pantry Lane,500g,each,Z,1.65,5061644000394,15061644000391,12,,12,24
+Food Cupboard > Sauces & Condiments,Soy Sauce,Pantry Lane,150ml,each,Z,1.30,5061644000400,15061644000407,12,,2,12
+Snacks & Confectionery > Crisps & Snacks,Ready Salted Crisps,Crunchwell,6 x 25g,each,S,1.95,5061755000016,15061755000013,12,,28,60
+Snacks & Confectionery > Crisps & Snacks,Cheese & Onion Crisps,Crunchwell,6 x 25g,each,S,1.95,5061755000023,15061755000020,12,,24,48
+Snacks & Confectionery > Crisps & Snacks,Salt & Vinegar Crisps,Crunchwell,6 x 25g,each,S,1.95,5061755000030,15061755000037,12,,20,36
+Snacks & Confectionery > Crisps & Snacks,Ready Salted Crisps,Crunchwell,32.5g,each,S,0.95,5061755000047,15061755000044,32,,40,96
+Snacks & Confectionery > Crisps & Snacks,Lightly Salted Tortilla Chips,Crunchwell,200g,each,S,1.40,5061755000054,15061755000051,12,,16,36
+Snacks & Confectionery > Crisps & Snacks,Salted Peanuts,Crunchwell,200g,each,S,1.60,5061755000061,15061755000068,12,,8,24
+Snacks & Confectionery > Crisps & Snacks,Sweet & Salty Popcorn,Crunchwell,80g,each,S,1.25,5061755000078,15061755000075,12,,8,24
+Snacks & Confectionery > Crisps & Snacks,Salted Pretzels,Crunchwell,175g,each,S,1.30,5061755000085,15061755000082,12,,6,12
+Snacks & Confectionery > Biscuits & Cakes,Digestive Biscuits,Crumbworth,400g,each,Z,1.20,5061792000017,15061792000014,12,,20,36
+Snacks & Confectionery > Biscuits & Cakes,Rich Tea Biscuits,Crumbworth,300g,each,Z,0.90,5061792000024,15061792000021,12,,12,24
+Snacks & Confectionery > Biscuits & Cakes,Milk Chocolate Digestives,Crumbworth,300g,each,S,1.75,5061792000031,15061792000038,12,,20,36
+Snacks & Confectionery > Biscuits & Cakes,Custard Creams,Crumbworth,400g,each,Z,0.95,5061792000048,15061792000045,12,,12,24
+Snacks & Confectionery > Biscuits & Cakes,Chocolate Chip Cookies,Crumbworth,200g,each,Z,1.35,5061792000055,15061792000052,12,,12,24
+Snacks & Confectionery > Biscuits & Cakes,Orange Jelly Cakes,Crumbworth,12 pack,each,Z,1.60,5061792000062,15061792000069,12,,12,24
+Snacks & Confectionery > Biscuits & Cakes,Chocolate Wafer Bars,Crumbworth,8 pack,each,S,1.85,5061792000079,15061792000076,12,,12,24
+Snacks & Confectionery > Chocolate & Sweets,Milk Chocolate Bar,Cocoa Lane,45g,each,S,1.05,5061829000010,15061829000017,24,,56,120
+Snacks & Confectionery > Chocolate & Sweets,Caramel Chocolate Bar,Cocoa Lane,50g,each,S,1.05,5061829000027,15061829000024,24,,36,72
+Snacks & Confectionery > Chocolate & Sweets,Milk Chocolate Sharing Bar,Cocoa Lane,180g,each,S,2.50,5061829000034,15061829000031,12,,16,36
+Snacks & Confectionery > Chocolate & Sweets,Chocolate Buttons Sharing Bag,Cocoa Lane,119g,each,S,1.75,5061829000041,15061829000048,12,,12,24
+Snacks & Confectionery > Chocolate & Sweets,Fruity Chews,Jellybrook,160g,each,S,1.50,5061866000011,15061866000018,12,,16,36
+Snacks & Confectionery > Chocolate & Sweets,Sour Sweets,Jellybrook,160g,each,S,1.50,5061866000028,15061866000025,12,,12,24
+Snacks & Confectionery > Chocolate & Sweets,Extra Strong Mints,Jellybrook,38g,each,S,0.75,5061866000035,15061866000032,24,,16,48
+Snacks & Confectionery > Chocolate & Sweets,Spearmint Chewing Gum,Jellybrook,10 pieces,each,S,0.80,5061866000042,15061866000049,24,,16,48
+Drinks > Soft Drinks,Cola,Fizzwell,2L,each,S,1.95,5061903000011,15061903000018,6,,40,72
+Drinks > Soft Drinks,Diet Cola,Fizzwell,2L,each,S,1.95,5061903000028,15061903000025,6,,28,54
+Drinks > Soft Drinks,Cola,Fizzwell,330ml can,each,S,0.85,5061903000035,15061903000032,24,,56,120
+Drinks > Soft Drinks,Cola,Fizzwell,8 x 330ml,each,S,4.50,5061903000042,15061903000049,3,,16,30
+Drinks > Soft Drinks,Cola,Thrift & Co,2L,each,S,0.70,5061274000061,15061274000068,6,,16,30
+Drinks > Soft Drinks,Lemonade,Fizzwell,2L,each,S,0.90,5061903000059,15061903000056,6,,16,30
+Drinks > Soft Drinks,Orange Fizz,Fizzwell,330ml can,each,S,0.80,5061903000066,15061903000063,24,,24,48
+Drinks > Soft Drinks,Energy Drink,Fizzwell,250ml can,each,S,1.20,5061903000073,15061903000070,24,,40,72
+Drinks > Soft Drinks,Sugar Free Energy Drink,Fizzwell,250ml can,each,S,1.20,5061903000080,15061903000087,24,,24,48
+Drinks > Soft Drinks,Orange Squash,Fizzwell,1L,each,S,1.40,5061903000097,15061903000094,12,,16,36
+Drinks > Soft Drinks,Blackcurrant Squash,Fizzwell,1L,each,S,1.60,5061903000103,15061903000100,12,,8,24
+Drinks > Soft Drinks,Sports Drink,Fizzwell,500ml,each,S,1.35,5061903000110,15061903000117,12,,12,24
+Drinks > Water,Still Spring Water,Glenbrae Springs,500ml,each,S,0.60,5061940000012,15061940000019,24,,60,120
+Drinks > Water,Still Spring Water,Glenbrae Springs,2L,each,S,0.75,5061940000029,15061940000026,6,,24,42
+Drinks > Water,Still Spring Water,Glenbrae Springs,6 x 500ml,each,S,2.00,5061940000036,15061940000033,4,,12,24
+Drinks > Water,Sparkling Spring Water,Glenbrae Springs,1L,each,S,0.80,5061940000043,15061940000040,6,,12,24
+Drinks > Juice,Smooth Orange Juice,Sunny Grove,1L,each,S,1.65,5061977000016,15061977000013,6,,24,42
+Drinks > Juice,Apple Juice,Sunny Grove,1L,each,S,1.10,5061977000023,15061977000020,12,,12,24
+Drinks > Juice,Cranberry Juice Drink,Sunny Grove,1L,each,S,1.60,5061977000030,15061977000037,12,,6,12
+Drinks > Juice,Apple Juice Cartons,Sunny Grove,4 x 200ml,each,S,1.20,5061977000047,15061977000044,6,,12,24
+"Beer, Wine & Spirits > Beer & Cider",Premium Lager,Harbour Gate Brewing,4 x 440ml,each,S,5.50,5062014000013,15062014000010,6,,24,42
+"Beer, Wine & Spirits > Beer & Cider",Premium Lager,Harbour Gate Brewing,10 x 440ml,each,S,11.50,5062014000020,15062014000027,2,,12,22
+"Beer, Wine & Spirits > Beer & Cider",Pale Ale,Harbour Gate Brewing,500ml bottle,each,S,2.10,5062014000037,15062014000034,8,,12,24
+"Beer, Wine & Spirits > Beer & Cider",Irish Style Stout,Harbour Gate Brewing,4 x 440ml,each,S,5.75,5062014000044,15062014000041,6,,8,18
+"Beer, Wine & Spirits > Beer & Cider",Alcohol Free Lager,Harbour Gate Brewing,4 x 330ml,each,S,4.00,5062014000051,15062014000058,6,,4,12
+"Beer, Wine & Spirits > Beer & Cider",Apple Cider,Pippin Hill,4 x 500ml,each,S,5.25,5062051000014,15062051000011,6,,12,24
+"Beer, Wine & Spirits > Wine",Merlot Red Wine,Castellan Hills,75cl,each,S,6.99,5062088000018,15062088000015,6,,20,36
+"Beer, Wine & Spirits > Wine",Shiraz Red Wine,Castellan Hills,75cl,each,S,7.49,5062088000025,15062088000022,6,,12,24
+"Beer, Wine & Spirits > Wine",Sauvignon Blanc White Wine,Castellan Hills,75cl,each,S,7.49,5062088000032,15062088000039,6,,20,36
+"Beer, Wine & Spirits > Wine",Pinot Grigio White Wine,Castellan Hills,75cl,each,S,6.99,5062088000049,15062088000046,6,,20,36
+"Beer, Wine & Spirits > Wine",Rose Wine,Castellan Hills,75cl,each,S,6.99,5062088000056,15062088000053,6,,12,24
+"Beer, Wine & Spirits > Wine",Prosecco,Castellan Hills,75cl,each,S,8.99,5062088000063,15062088000060,6,,12,24
+"Beer, Wine & Spirits > Spirits",Vodka,Northern Still,70cl,each,S,16.00,5062125000018,15062125000015,6,,8,18
+"Beer, Wine & Spirits > Spirits",Vodka,Northern Still,35cl,each,S,9.00,5062125000025,15062125000022,6,,6,12
+"Beer, Wine & Spirits > Spirits",London Dry Gin,Northern Still,70cl,each,S,18.00,5062125000032,15062125000039,6,,8,18
+"Beer, Wine & Spirits > Spirits",Blended Scotch Whisky,Northern Still,70cl,each,S,19.00,5062125000049,15062125000046,6,,6,12
+"Beer, Wine & Spirits > Spirits",Spiced Rum,Northern Still,70cl,each,S,20.00,5062125000056,15062125000053,6,,2,6
+Household > Cleaning & Kitchen,Washing Up Liquid,Brightway,450ml,each,S,1.20,5062162000019,15062162000016,12,,16,36
+Household > Cleaning & Kitchen,Thick Bleach,Brightway,750ml,each,S,0.80,5062162000026,15062162000023,12,,12,24
+Household > Cleaning & Kitchen,Multi-Surface Cleaner Spray,Brightway,500ml,each,S,1.50,5062162000033,15062162000030,8,,8,16
+Household > Cleaning & Kitchen,Dishwasher Tablets,Brightway,30 pack,each,S,5.50,5062162000040,15062162000047,6,,6,12
+Household > Cleaning & Kitchen,Bin Bags,Brightway,20 pack,each,S,2.25,5062162000057,15062162000054,12,,8,24
+Household > Cleaning & Kitchen,Sponge Scourers,Brightway,4 pack,each,S,0.95,5062162000064,15062162000061,12,,6,12
+Household > Cleaning & Kitchen,Aluminium Foil,Brightway,10m,each,S,1.75,5062162000071,15062162000078,12,,6,12
+Household > Cleaning & Kitchen,Cling Film,Brightway,30m,each,S,1.25,5062162000088,15062162000085,12,,6,12
+Household > Cleaning & Kitchen,AA Batteries,Brightway,4 pack,each,S,4.00,5062162000095,15062162000092,10,,2,10
+Household > Laundry,Biological Laundry Liquid,Brightway,38 washes,each,S,6.00,5062162000101,15062162000108,4,,8,16
+Household > Laundry,Fabric Conditioner,Brightway,1.2L,each,S,2.50,5062162000118,15062162000115,6,,6,12
+Household > Paper & Tissues,Toilet Tissue,Cloudsoft,9 rolls,each,S,4.75,5062199000013,15062199000010,5,,24,45
+Household > Paper & Tissues,Toilet Tissue,Cloudsoft,4 rolls,each,S,2.40,5062199000020,15062199000027,10,,16,30
+Household > Paper & Tissues,Kitchen Roll,Cloudsoft,2 rolls,each,S,2.25,5062199000037,15062199000034,12,,12,24
+Household > Paper & Tissues,Facial Tissues,Cloudsoft,Box,each,S,1.20,5062199000044,15062199000041,12,,6,12
+Health & Beauty > Toiletries,Fresh Mint Toothpaste,Fresh Smile,75ml,each,S,1.50,5062236000013,15062236000010,12,,12,24
+Health & Beauty > Toiletries,Medium Toothbrush,Fresh Smile,2 pack,each,S,2.00,5062236000020,15062236000027,12,,4,12
+Health & Beauty > Toiletries,Shampoo,Puremoor,400ml,each,S,2.75,5062273000014,15062273000011,6,,8,18
+Health & Beauty > Toiletries,Shower Gel,Puremoor,250ml,each,S,1.50,5062273000021,15062273000028,6,,12,24
+Health & Beauty > Toiletries,Antiperspirant Spray,Puremoor,150ml,each,S,2.50,5062273000038,15062273000035,6,,12,24
+Health & Beauty > Toiletries,Hand Wash,Puremoor,250ml,each,S,1.10,5062273000045,15062273000042,6,,8,18
+Health & Beauty > Toiletries,Disposable Razors,Puremoor,5 pack,each,S,2.50,5062273000052,15062273000059,12,,2,12
+Health & Beauty > Toiletries,Sanitary Towels Regular,Puremoor,14 pack,each,Z,1.85,5062273000069,15062273000066,12,,6,12
+Health & Beauty > Medicines,Paracetamol Tablets 500mg,Relivia,16 pack,each,S,0.65,5062310000014,15062310000011,12,,16,36
+Health & Beauty > Medicines,Ibuprofen Tablets 200mg,Relivia,16 pack,each,S,0.85,5062310000021,15062310000028,12,,8,24
+Health & Beauty > Medicines,Cold & Flu Capsules,Relivia,16 pack,each,S,3.25,5062310000038,15062310000035,12,,4,12
+Health & Beauty > Medicines,Assorted Plasters,Relivia,40 pack,each,S,2.00,5062310000045,15062310000042,12,,2,12
+Health & Beauty > Medicines,Nicotine Gum 2mg,Relivia,105 pieces,each,R,9.50,5062310000052,15062310000059,6,,1,6
+Baby > Baby Care,Nappies Size 4,Littlebud,30 pack,each,S,5.50,5062347000018,15062347000015,4,,6,12
+Baby > Baby Care,Nappies Size 5,Littlebud,26 pack,each,S,5.50,5062347000025,15062347000022,4,,4,8
+Baby > Baby Care,Baby Wipes,Littlebud,64 pack,each,S,1.10,5062347000032,15062347000039,12,,12,24
+Baby > Baby Food,Apple & Banana Fruit Pouch,Littlebud,120g,each,Z,1.10,5062347000049,15062347000046,12,,8,24
+Baby > Baby Food,Baby Porridge,Littlebud,200g,each,Z,2.25,5062347000056,15062347000053,6,,1,6
+Baby > Baby Food,First Infant Milk,Littlebud,800g,each,Z,11.50,5062347000063,15062347000060,6,,2,6
+Pet > Pet Food & Care,Cat Food Pouches in Gravy,Whisker & Wag,12 x 85g,each,S,4.50,5062384000019,15062384000016,4,,12,24
+Pet > Pet Food & Care,Dry Cat Food Chicken,Whisker & Wag,800g,each,S,3.25,5062384000026,15062384000023,6,,6,12
+Pet > Pet Food & Care,Dog Food Chunks in Jelly,Whisker & Wag,400g,each,S,1.00,5062384000033,15062384000030,12,,16,36
+Pet > Pet Food & Care,Adult Dry Dog Food,Whisker & Wag,2kg,each,S,5.50,5062384000040,15062384000047,4,,4,8
+Pet > Pet Food & Care,Cat Litter,Whisker & Wag,5L,each,S,2.50,5062384000057,15062384000054,4,,4,8
+Pet > Pet Food & Care,Gravy Dog Biscuits,Whisker & Wag,400g,each,S,1.75,5062384000064,15062384000061,12,,4,12

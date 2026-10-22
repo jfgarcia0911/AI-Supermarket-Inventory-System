@@ -1,0 +1,7 @@
+Supplier Name,Account Number,Phone,Email,Payment Terms Days,Delivery Days,Lead Time Days
+Fresh Dairy Ltd,FD-20417,01632 960101,orders@freshdairy.example,14,Mon-Sat,1
+Valley Foods Ltd,VF-88213,01632 960102,orders@valleyfoods.example,14,Mon-Sat,1
+Hearthstone Bakery Ltd,HB-3390,01632 960103,orders@hearthstonebakery.example,7,Daily,1
+Copperfield Meats Ltd,CM-11872,01632 960104,orders@copperfieldmeats.example,14,"Mon, Wed, Fri",2
+Central Wholesale Ltd,700451,01632 960105,orders@centralwholesale.example,30,"Tue, Fri",3
+Harbourside Drinks Ltd,HD-5521,01632 960106,orders@harbourside.example,30,Thu,3

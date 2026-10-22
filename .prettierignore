@@ -1,0 +1,7 @@
+# Generated or third-party files
+package-lock.json
+next-env.d.ts
+/sample-data/
+/docs/
+/supabase/.temp/
+/.vercel/

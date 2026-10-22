@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Supermarket Inventory System — Detailed Design</title>
+<style>
+  :root {
+    --bg: #f7f8f6;
+    --surface: #ffffff;
+    --text: #1c2320;
+    --muted: #5a6661;
+    --border: #dde3df;
+    --accent: #1d7556;
+    --accent-soft: #e5f2ec;
+    --code-bg: #f1f4f2;
+    --warn: #8a5a00;
+    --warn-soft: #fbf3e2;
+    --lock: #a13a3a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111513;
+      --surface: #181d1b;
+      --text: #e4eae7;
+      --muted: #9aa7a1;
+      --border: #2b3330;
+      --accent: #5cc49b;
+      --accent-soft: #1b2b24;
+      --code-bg: #151a18;
+      --warn: #e2b55c;
+      --warn-soft: #2a2416;
+      --lock: #ec8b8b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  .page { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+  header.top { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  header.top h1 { font-size: clamp(1.5rem, 4vw, 2.1rem); line-height: 1.25; margin: 0 0 6px; }
+  .meta { color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  .badge { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 10px; font-size: .85rem; }
+  .layout { display: block; }
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+  }
+  nav.toc h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; border: 0; padding: 0; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a { color: var(--text); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+  @media (min-width: 1000px) {
+    .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; }
+    nav.toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; margin-bottom: 0; }
+  }
+  main { min-width: 0; }
+  section { margin-bottom: 48px; }
+  h2 { font-size: 1.45rem; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent-soft); scroll-margin-top: 16px; }
+  h3 { font-size: 1.12rem; margin: 28px 0 8px; scroll-margin-top: 16px; }
+  h4 { font-size: 1rem; margin: 20px 0 6px; }
+  p, ul, ol { margin: 0 0 12px; }
+  li { margin: 3px 0; }
+  a { color: var(--accent); }
+  code, .mono {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+    font-size: .88em;
+  }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+  .note {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0 16px;
+  }
+  .warn {
+    background: var(--warn-soft);
+    border-left: 4px solid var(--warn);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0 16px;
+  }
+  .table-wrap { overflow-x: auto; margin: 8px 0 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.c, th.c { text-align: center; }
+  table.db td:first-child { font-family: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace; font-size: .86rem; white-space: nowrap; }
+  table.db td:nth-child(2) { white-space: nowrap; color: var(--muted); }
+  .table-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 22px 0 4px; }
+  .table-title code { font-size: .95rem; font-weight: 700; }
+  .table-title span { color: var(--muted); font-size: .9rem; }
+  .lock { color: var(--lock); }
+  pre {
+    overflow-x: auto;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+    font-size: .8rem;
+    line-height: 1.35;
+    margin: 8px 0 18px;
+  }
+  .grid2 { display: grid; gap: 12px; }
+  @media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .card h4 { margin-top: 4px; }
+  footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--border); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="top">
+  <h1>AI Supermarket Inventory System — Detailed Design</h1>
+  <p class="meta">Approved 23 Oct 2026 · Phase 0</p>
+  <p>This document is the agreed design for the first version of the system. It is written for two readers: the shop owner (plain English, with technical terms explained) and the developers who build and maintain it. Any change to this design should be agreed with the owner before it is built.</p>
+  <span class="badge">Status: approved for Phase 0</span>
+</header>
+
+<div class="layout">
+
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#decisions">Decisions recorded</a></li>
+    <li><a href="#permissions">Users and permissions</a></li>
+    <li><a href="#releases">Releases</a></li>
+    <li><a href="#architecture">Architecture and stack</a></li>
+    <li><a href="#rules">Business rules</a></li>
+    <li><a href="#database">Database design</a></li>
+    <li><a href="#screens">Screens</a></li>
+    <li><a href="#security">Security, validation and testing</a></li>
+    <li><a href="#phases">Development phases</a></li>
+    <li><a href="#sample-data">Sample data</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- 1 -->
+<section id="overview">
+  <h2>1. Overview</h2>
+
+  <h3>What the system is</h3>
+  <ul>
+    <li><strong>It works alongside your existing till (EPOS). It is not a point-of-sale system.</strong> The till keeps ringing up sales. Sales come into this system once a day as a CSV file exported from the till (a direct connection to the till may come later).</li>
+    <li><strong>This system is in charge of</strong> purchases and deliveries, supplier costs, stock quantities, counts, waste, expiry and — because the till comparison has been removed — selling prices.</li>
+    <li><strong>The core of the design is a stock ledger.</strong> Every change to stock is saved as a separate record, like transactions on a bank statement. The stock you have is the running balance. This keeps the numbers accurate and explainable: you can always see <em>why</em> a number is what it is.</li>
+    <li><strong>Manual first, AI later.</strong> The manual workflows (typing in a delivery, counting, adjusting) are built first. Later, AI invoice reading fills in the same "receive delivery" screen, and a person confirms before stock changes. If the AI gets something wrong, nothing breaks.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Estimated stock = last count + received − sold ± adjustments.</strong><br>
+    Each part needs its own data source. If one is missing, the number drifts. That is why the daily sales import is part of the first release.
+  </div>
+
+  <h3>Till comparison removed</h3>
+  <p>The till product-list import, the "missing from till" report and the <code>epos_catalogue_items</code> table have been removed. This also drops "identify products missing from our till system" from the original requirements. Knock-on effects:</p>
+  <ul>
+    <li><strong>Selling prices now live in this system.</strong> They are entered on each product, or in bulk from a spreadsheet. When a price changes on the till, it must be changed here too, or margin figures (Release 2) will be wrong.</li>
+    <li><strong>Bulk product loading stays, as a general spreadsheet import.</strong> It accepts any Excel or CSV file, including one exported from the till. It is a one-way setup tool, not a comparison.</li>
+    <li><strong>The sales import still flags unknown barcodes.</strong> That is not a till comparison: it stops sales from quietly disappearing from the stock figures.</li>
+  </ul>
+
+  <h3>Supermarket details that shape the design</h3>
+  <ul>
+    <li><strong>Cases vs. single items.</strong> You buy a case of 24 and sell one can at a time, so each supplier product needs a pack size.</li>
+    <li><strong>Several barcodes per product:</strong> the single-item barcode, the case barcode, and old and new packaging.</li>
+    <li><strong>Supplier codes don't match yours.</strong> Each supplier has its own code and name for the same product.</li>
+    <li><strong>Weighed and loose items</strong> are sold by kg. In-store price labels (barcodes starting with 2) contain the price or weight inside the barcode.</li>
+    <li><strong>VAT.</strong> Margins are worked out before VAT. Most food is 0% VAT, but soft drinks, confectionery and alcohol are 20%.</li>
+    <li><strong>Delivery vs. invoice.</strong> Deliveries can be short, damaged, substituted or followed by credit notes.</li>
+    <li><strong>Expiry quantities are estimates,</strong> because till sales don't say which batch was sold.</li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section id="decisions">
+  <h2>2. Decisions recorded</h2>
+  <p>All recommendations in the proposal were accepted on 23 Oct 2026, with the till comparison removed.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Decision</th></tr></thead>
+      <tbody>
+        <tr><td>Sales data</td><td>Daily CSV import from the till; direct till connection later</td></tr>
+        <tr><td>Scale</td><td>One business, one store, designed to be ready for more stores</td></tr>
+        <tr><td>Locale</td><td>UK, GBP, VAT 0 / 5 / 20%, shelf prices include VAT</td></tr>
+        <tr><td>Users</td><td>Personal logins (no shared accounts); stock staff can't see costs or margins</td></tr>
+        <tr><td>Stock rules</td><td>Full opening count · negative stock allowed but flagged · manager approval over £25 or 20 units · weighted average cost</td></tr>
+        <tr><td>Operations</td><td>Counts outside trading hours · simple expiry checks, chilled and fresh first · Bluetooth scanners and phone cameras · online-only</td></tr>
+        <tr><td>Alerts</td><td>In the app, plus a daily email (Release 2)</td></tr>
+        <tr><td>AI</td><td>Claude Opus 5.5 with a monthly spending cap; test cheaper models on real invoices before deciding</td></tr>
+        <tr><td>Till comparison</td><td>Removed — selling prices are maintained in this system</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Still open (not blocking yet)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Item</th><th>Needed by</th><th>Working default until answered</th></tr></thead>
+      <tbody>
+        <tr><td>Which till system, plus one real daily sales export</td><td>Phase 3</td><td>Sample export format in <code>sample-data/</code>; column mapping makes the importer flexible</td></tr>
+        <tr><td>Approximate number of products; weighed items and in-store printed barcodes</td><td>Phase 1</td><td>Design handles items and kg; in-store barcode rule confirmed when a sample is seen</td></tr>
+        <tr><td>Invoice volumes and formats (paper, PDF, portal); dedicated invoices@ address</td><td>Release 3</td><td>—</td></tr>
+        <tr><td>12+ months of sales history for forecasting</td><td>Release 4</td><td>—</td></tr>
+        <tr><td>Top reports, export formats, accounting software</td><td>Phase 4</td><td>The MVP report list in section 8</td></tr>
+        <tr><td>Purchase orders to suppliers</td><td>Release 4</td><td>Out of scope for now</td></tr>
+        <tr><td>Returns to suppliers</td><td>Phase 2</td><td>Handled with credit notes and <code>supplier_return</code> movements</td></tr>
+        <tr><td>Hosting budget (about $45–70 a month plus AI usage)</td><td>Before the in-store pilot</td><td>Development runs on free plans</td></tr>
+        <tr><td>App name, branding, web address</td><td>Phase 4</td><td>Neutral design for now</td></tr>
+        <tr><td>Who maintains the app long term</td><td>—</td><td>The owner with AI help, so documentation and tests are kept thorough</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="permissions">
+  <h2>3. Users and permissions</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Action</th><th class="c">Owner</th><th class="c">Manager</th><th class="c">Stock staff</th><th class="c">Viewer / Accountant</th></tr></thead>
+      <tbody>
+        <tr><td>View stock levels and history</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td></tr>
+        <tr><td>Scan, count, record expiry</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td></tr>
+        <tr><td>Check in deliveries (quantities only)</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td></tr>
+        <tr><td>Record waste and adjustments</td><td class="c">✅</td><td class="c">✅</td><td class="c">⚠️ needs approval above a limit</td><td class="c">❌</td></tr>
+        <tr><td>See cost prices and margins</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">✅</td></tr>
+        <tr><td>Post invoices (confirm costs)</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Approve adjustments and count differences</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Edit products, prices, suppliers, reorder levels</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Import sales and product spreadsheets</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Reports</td><td class="c">✅</td><td class="c">✅</td><td class="c">Basic only</td><td class="c">✅</td></tr>
+        <tr><td>Reverse posted records (void deliveries, reverse imports)</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Users, roles, settings</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td><td class="c">❌</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <strong>Receiving is split into two steps.</strong> Staff check what arrived (quantities). A manager then confirms the invoice costs, which "posts" the delivery into stock.<br>
+    <strong>Permissions are enforced inside the database,</strong> not just by hiding buttons (see section 9).
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="releases">
+  <h2>4. Releases</h2>
+  <p>Each release is useful on its own. AI comes after the manual workflow it speeds up.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Release</th><th>Theme</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>1 (MVP)</strong></td>
+          <td>Stock numbers you can trust</td>
+          <td>Logins and roles · products, categories, multiple barcodes, pack sizes, VAT, selling prices, reorder levels · <strong>product spreadsheet import</strong> · suppliers and their product codes and costs · opening stock count · <strong>typing in deliveries by hand</strong>, with a photo or PDF of the invoice attached · adjustments with reasons and approvals · <strong>daily till sales import (CSV)</strong> with an unmatched-lines list, which drives estimated stock · stock counts with barcode scanning · movement history · dashboard · in-app alerts (low stock, negative stock, missing sales file, unposted deliveries, recounts, approvals) · basic reports</td>
+        </tr>
+        <tr>
+          <td><strong>2</strong></td>
+          <td>Money and freshness</td>
+          <td>Expiry checks and alerts (chilled and fresh first) · supplier price-rise and margin tracking (simple maths once invoices are in, no AI needed) · slow sellers · discrepancy reports · daily alert email and scheduled email reports · simple reorder suggestions</td>
+        </tr>
+        <tr>
+          <td><strong>3</strong></td>
+          <td>AI invoice reading</td>
+          <td>Upload a PDF or photo → AI reads it → staff check it on a review screen → post · invoices emailed to a dedicated address · automatic matching that learns from staff corrections</td>
+        </tr>
+        <tr>
+          <td><strong>4</strong></td>
+          <td>Intelligence</td>
+          <td>AI assistant ("what did dairy waste cost us this month?") · demand forecasting · direct connection to the till system · purchase orders · transfers between stores</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="architecture">
+  <h2>5. Architecture and stack</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Technology</th><th>Verdict</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Next.js + TypeScript</td><td>✅ Keep</td><td>One codebase covers both the screens and the server logic. TypeScript catches many mistakes before users ever see them.</td></tr>
+        <tr><td>Tailwind CSS</td><td>✅ Keep, add <strong>shadcn/ui</strong></td><td>shadcn/ui provides ready-made, accessible tables, forms and dialogs. It saves time and keeps the look consistent.</td></tr>
+        <tr><td>Supabase (Postgres)</td><td>✅ Keep, strong fit</td><td>Postgres supports <strong>transactions</strong>: a group of changes that all succeed or all fail, so a 40-line delivery can never half-post. Supabase also provides logins, file storage for invoice images, and scheduled jobs.</td></tr>
+        <tr><td>Vercel</td><td>✅ Keep, use the <strong>Pro</strong> plan for live use</td><td>The free Hobby plan is for non-commercial use only. Development can use the free plan.</td></tr>
+        <tr><td>Anthropic API</td><td>✅ Good fit (Release 3+)</td><td>Claude reads PDFs and photos directly and can return data in a fixed format that the app then checks.</td></tr>
+        <tr><td>GitHub</td><td>✅ Keep, add <strong>GitHub Actions</strong></td><td>Runs checks automatically on every change.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Additions</h3>
+  <ul>
+    <li><strong>Zod.</strong> One set of validation rules, used on both the forms and the server.</li>
+    <li><strong>Supabase CLI migrations.</strong> Database structure changes are saved as versioned files in Git, so the database can always be rebuilt exactly.</li>
+    <li><strong>Supabase's own client with generated TypeScript types, not an ORM like Prisma.</strong> An ORM is a library that talks to the database for you. Prisma usually connects as a powerful user that skips the database's security rules; going through Supabase keeps those rules in force.</li>
+    <li><strong>Stock changes run as functions inside the database</strong> (for example "post delivery" or "approve count"). Each runs as one transaction with its own permission checks. The app can never write to stock tables directly.</li>
+    <li><strong>PWA (Progressive Web App).</strong> Staff can install the website on a phone home screen like an app, with no app store.</li>
+    <li><strong>Barcode scanning.</strong> Bluetooth handheld scanners behave like a keyboard and are the most reliable option. Phone-camera scanning uses a JavaScript library, because built-in browser support isn't reliable on iPhones.</li>
+    <li><strong>Resend</strong> (or similar) for alert and report emails, and <strong>scheduled jobs</strong> for nightly alerts, reports and the ledger check.</li>
+    <li><strong>Vitest and Playwright</strong> for automated tests; <strong>Sentry</strong> (optional) for error monitoring.</li>
+  </ul>
+
+  <h3>How the pieces fit together</h3>
+<pre>
+Phone / tablet / desktop browser (installable as an app)
+              │
+      Next.js app on Vercel ── validates everything with Zod
+              │
+   ┌──────────┼──────────────┬───────────────────┐
+Postgres   File storage     Logins          Anthropic API (Release 3+)
+(tables, security rules,   (private          (invoice reading,
+ stock functions,           invoice           assistant)
+ audit log)                 files)
+              │
+   Nightly jobs: alerts, reports, ledger check
+
+Till ──daily CSV export──► Sales import screen  (direct connection later)
+Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
+</pre>
+
+  <h3>Environments</h3>
+  <p>There are separate <strong>development</strong> and <strong>live</strong> databases. Testing never touches real shop data. Development runs on free plans; paid plans are only needed before the in-store pilot.</p>
+
+  <h3>Rough running costs (check current prices)</h3>
+  <ul>
+    <li><strong>Supabase Pro:</strong> about $25/month, including daily backups. The free tier pauses inactive projects and doesn't give the backups live business data needs.</li>
+    <li><strong>Vercel Pro:</strong> about $20/month per team member.</li>
+    <li><strong>Email:</strong> the free tier should cover the shop's volume.</li>
+    <li><strong>AI:</strong> paid per use (Release 3 onwards).</li>
+  </ul>
+
+  <h3>AI notes</h3>
+  <ul>
+    <li><strong>Default model:</strong> Claude Opus 5.5 ($4 per million tokens in, $20 per million out; tokens are the units the API charges by).</li>
+    <li><strong>Cost per invoice:</strong> a typical 1–2 page invoice should cost roughly 5–20 US cents. This will be measured on real invoices.</li>
+    <li><strong>Cheaper models:</strong> Sonnet 5.5 or Haiku 5.5 may be accurate enough. The owner decides, after they've been tested on a set of real invoices.</li>
+    <li><strong>Batch API:</strong> halves the cost for invoices that don't need instant results, such as emailed invoices processed overnight.</li>
+    <li><strong>AI never changes stock by itself.</strong> Every invoice goes through: AI reads it → the system checks it → a person approves it.</li>
+    <li><strong>Invoice and email text is treated as untrusted.</strong> An email could contain text trying to give the AI instructions. The AI only extracts data and has no ability to take actions. A monthly spending cap applies.</li>
+  </ul>
+</section>
+
+<!-- 6 -->
+<section id="rules">
+  <h2>6. Business rules</h2>
+
+  <h3>Stock accuracy</h3>
+  <ol>
+    <li>Stock only changes through movement records. Nobody types over a stock number.</li>
+    <li>Movements are permanent. Mistakes are fixed with a reversing entry, so the history always explains the current number.</li>
+    <li>Actions with several steps are all-or-nothing.</li>
+    <li><strong>Negative stock is allowed but flagged.</strong> If it were blocked, a sales import would fail whenever someone forgot to enter a delivery, even though the till already sold the item. A negative number is a useful sign that something was missed.</li>
+    <li>Quantities are always stored as single items or kg. Receiving one case of 24 adds 24.</li>
+  </ol>
+
+  <h3>Deliveries</h3>
+  <ol start="6">
+    <li><strong>Posting deliveries.</strong> Staff check in the quantities; a manager posts the delivery with costs. Stock goes up when the delivery is posted, dated at the time the goods arrived (<code>delivered_at</code>). Deliveries left unposted for more than 24 hours raise an alert.</li>
+    <li>An invoice can only be posted once, and posted invoices are locked. The same invoice number can't be entered twice for one supplier and document type.</li>
+    <li>Every line must be matched to a product, or marked "non-stock" (such as a delivery charge), before posting. The lines must add up to the invoice total.</li>
+    <li>If quantity received ≠ quantity invoiced, the system records a supplier discrepancy you can claim a credit for.</li>
+    <li>Unit cost = case cost ÷ units per case. All costs are stored before VAT. Credit notes are separate records, never edits to the original invoice.</li>
+  </ol>
+
+  <h3>Adjustments and counts</h3>
+  <ol start="11">
+    <li>Every adjustment needs a reason. Adjustments over <strong>£25 or 20 units</strong> need a manager's approval. Adjustments made by managers are approved automatically.</li>
+    <li><strong>Count timing.</strong> Counts happen outside trading hours, and each count has an "as of" moment. Sales arrive the next morning, so the system can't know the expected quantity at the moment staff count. It works this out when a manager reviews the count: expected = the ledger balance as of that moment. <strong>Approval is blocked until that day's sales are imported</strong>, and the system warns if any deliveries are still unposted.</li>
+    <li><strong>Full counts.</strong> For products nobody counted, the manager chooses: set them to zero, or leave them unchanged.</li>
+    <li>Products whose difference is over 20 units or £25 are flagged for a recount before approval. Approval writes count corrections (or opening balances, for the opening count).</li>
+  </ol>
+
+  <h3>Prices, costs and margins</h3>
+  <ol start="15">
+    <li><strong>Selling prices are maintained in this system,</strong> on each product or in bulk by spreadsheet. When a price changes on the till, it must be changed here too.</li>
+    <li>Margin = (selling price before VAT − unit cost) ÷ selling price before VAT.</li>
+    <li><strong>Average cost formula:</strong> new average = (stock on hand × old average + units received × new unit cost) ÷ (stock on hand + units received). If stock is negative, it is treated as zero in this formula. Stock value uses the average cost.</li>
+    <li>(Release 2) A price-rise alert fires when a supplier's new unit cost beats their last cost by more than X%. A margin alert fires when a product falls below its category's target margin. Price alerts use the last cost.</li>
+  </ol>
+
+  <h3>Alerts and catalogue</h3>
+  <ol start="19">
+    <li>Low stock means on hand ≤ reorder level. There's only one open alert per type, store and product, and it closes itself when the problem is fixed.</li>
+    <li>(Release 2) Expiry warnings come N days before the date, set per category (for example 2 days for chilled, 30 for ambient).</li>
+    <li>(Release 2) A slow seller is a product in stock that sold fewer than X units in the last Y days (default 28 days).</li>
+    <li>Products with history are deactivated, never deleted.</li>
+    <li>Each barcode belongs to one active product, and its check digit is validated.</li>
+    <li>Unknown codes in sales files go to an "unmatched" list. They are never silently dropped. When matched later, the movement is dated at the original sale date. The same file or sales period can't be imported twice, and a missing day's sales raises an alert.</li>
+  </ol>
+
+  <h3>Access and time</h3>
+  <ol start="25">
+    <li><strong>Staff never see costs.</strong> Staff screens read from "staff views" that leave out every cost column (see section 7).</li>
+    <li>Times are stored in a universal format (UTC) and shown in UK time, which avoids bugs when the clocks change. Daily sales are dated at the store's <code>trading_day_end</code> time.</li>
+    <li>Money is stored as exact decimals, with 4 decimal places for unit costs (for example £0.4167 per can).</li>
+  </ol>
+</section>
+
+<!-- 7 -->
+<section id="database">
+  <h2>7. Database design (Release 1)</h2>
+
+  <h3>How to read the tables</h3>
+  <ul>
+    <li>Every table also has an <code>id</code>, <code>created_at</code> and <code>created_by</code> (plus <code>updated_at</code> if rows can be edited). These aren't repeated below.</li>
+    <li><code>→ table</code> means "links to a row in that table".</li>
+    <li><code>qty</code> is an exact decimal with 3 places, so it can hold kg. It's always stored as single items or kg.</li>
+    <li><code>money</code> is an exact decimal with 4 places, before VAT unless noted.</li>
+    <li><span class="lock">🔒</span> marks cost data. Only owners, managers and viewers can see it.</li>
+  </ul>
+
+  <h3>Access</h3>
+  <div class="table-title"><code>stores</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>name</td><td>text</td><td>required</td></tr>
+      <tr><td>address</td><td>text</td><td></td></tr>
+      <tr><td>timezone</td><td>text</td><td>default Europe/London</td></tr>
+      <tr><td>trading_day_end</td><td>time</td><td>default 22:00 — daily sales are dated at this time</td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>profiles</code><span>one per login</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>full_name</td><td>text</td><td>required</td></tr>
+      <tr><td>email</td><td>text</td><td>required, unique</td></tr>
+      <tr><td>role</td><td>choice</td><td>owner | manager | staff | viewer</td></tr>
+      <tr><td>active</td><td>yes/no</td><td>switched off, never deleted</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>store_members</code><span>which stores each person can use</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>profile</td><td>→ profiles</td><td rowspan="2">unique pair</td></tr>
+      <tr><td>store</td><td>→ stores</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Catalogue</h3>
+  <div class="table-title"><code>categories</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>name</td><td>text</td><td>unique within its parent</td></tr>
+      <tr><td>parent</td><td>→ categories</td><td>optional (Chilled › Dairy › Milk)</td></tr>
+      <tr><td>target_margin_pct</td><td>decimal</td><td>optional, inherited from the parent (used Release 2)</td></tr>
+      <tr><td>expiry_warning_days</td><td>number</td><td>optional (used Release 2)</td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>vat_rates</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>code</td><td>text</td><td>Z · R · S</td></tr>
+      <tr><td>name</td><td>text</td><td>Zero · Reduced · Standard</td></tr>
+      <tr><td>rate_pct</td><td>decimal</td><td>0 · 5 · 20</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>products</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>name</td><td>text</td><td>required</td></tr>
+      <tr><td>brand</td><td>text</td><td></td></tr>
+      <tr><td>size</td><td>text</td><td>e.g. "330ml", "6 x 25g"</td></tr>
+      <tr><td>category</td><td>→ categories</td><td>required</td></tr>
+      <tr><td>sold_by</td><td>choice</td><td>each | kg</td></tr>
+      <tr><td>vat_rate</td><td>→ vat_rates</td><td>required</td></tr>
+      <tr><td>sell_price</td><td>money</td><td>shelf price <strong>including</strong> VAT; maintained in this system</td></tr>
+      <tr><td>reorder_point</td><td>qty</td><td>low-stock alert at or below this</td></tr>
+      <tr><td>reorder_qty</td><td>qty</td><td>suggested order amount</td></tr>
+      <tr><td>till_code</td><td>text</td><td>optional, unique — for loose items the till reports without a barcode</td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>product_barcodes</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>product</td><td>→ products</td><td></td></tr>
+      <tr><td>barcode</td><td>text</td><td>unique among active barcodes; check digit validated</td></tr>
+      <tr><td>pack_type</td><td>choice</td><td>unit | case | outer</td></tr>
+      <tr><td>units_per_pack</td><td>qty</td><td>1 for a single item, 24 for a case of 24</td></tr>
+      <tr><td>is_primary</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>sell_price_history</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>product</td><td>→ products</td><td></td></tr>
+      <tr><td>sell_price</td><td>money</td><td>including VAT</td></tr>
+      <tr><td>effective_from</td><td>date-time</td><td></td></tr>
+      <tr><td>source</td><td>choice</td><td>manual | spreadsheet</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Prices and reorder levels apply to the whole business. If a second store ever needs its own, a small per-store override table is added. That's an add-on, not a rebuild.</p>
+
+  <h3>Suppliers</h3>
+  <div class="table-title"><code>suppliers</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>name</td><td>text</td><td>required, unique</td></tr>
+      <tr><td>account_number</td><td>text</td><td>your account number with them</td></tr>
+      <tr><td>contact_name, phone, email</td><td>text</td><td></td></tr>
+      <tr><td>payment_terms_days</td><td>number</td><td></td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>supplier_products</code><span>the "translation table"; no costs here, so staff can use it at check-in</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>supplier</td><td>→ suppliers</td><td></td></tr>
+      <tr><td>product</td><td>→ products</td><td></td></tr>
+      <tr><td>supplier_code</td><td>text</td><td>their code; unique per supplier</td></tr>
+      <tr><td>supplier_description</td><td>text</td><td>as printed on their invoices</td></tr>
+      <tr><td>units_per_case</td><td>qty</td><td>required, greater than 0</td></tr>
+      <tr><td>is_preferred</td><td>yes/no</td><td></td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>supplier_cost_history</code> <span class="lock">🔒</span><span>every cost ever seen</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>supplier_product</td><td>→ supplier_products</td><td></td></tr>
+      <tr><td>case_cost</td><td>money</td><td></td></tr>
+      <tr><td>unit_cost</td><td>money</td><td>case cost ÷ units per case</td></tr>
+      <tr><td>effective_date</td><td>date</td><td></td></tr>
+      <tr><td>invoice_line</td><td>→ supplier_invoice_lines</td><td></td></tr>
+      <tr><td>change_pct</td><td>decimal</td><td>vs. that supplier's previous cost</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Deliveries</h3>
+  <div class="table-title"><code>supplier_invoices</code><span>called "Deliveries" in the app</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store</td><td>→ stores</td><td></td></tr>
+      <tr><td>supplier</td><td>→ suppliers</td><td></td></tr>
+      <tr><td>document_type</td><td>choice</td><td>invoice | credit_note</td></tr>
+      <tr><td>invoice_number</td><td>text</td><td>required to post; unique per supplier + document type</td></tr>
+      <tr><td>invoice_date</td><td>date</td><td></td></tr>
+      <tr><td>delivered_at</td><td>date-time</td><td>stock movements are dated with this</td></tr>
+      <tr><td>status</td><td>choice</td><td>draft → checked_in → posted | void</td></tr>
+      <tr><td>source</td><td>choice</td><td>manual (Release 3 adds upload | email)</td></tr>
+      <tr><td>attachments</td><td>files</td><td>photos / PDFs in private storage</td></tr>
+      <tr><td>net_total, vat_total, gross_total <span class="lock">🔒</span></td><td>money</td><td>as printed on the invoice</td></tr>
+      <tr><td>checked_in_by, checked_in_at</td><td></td><td></td></tr>
+      <tr><td>posted_by, posted_at</td><td></td><td></td></tr>
+      <tr><td>voided_by, voided_at, void_reason</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>supplier_invoice_lines</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>invoice</td><td>→ supplier_invoices</td><td></td></tr>
+      <tr><td>line_number</td><td>number</td><td></td></tr>
+      <tr><td>printed_description, printed_code</td><td>text</td><td>exactly as printed</td></tr>
+      <tr><td>line_kind</td><td>choice</td><td>stock | non_stock (delivery charge, deposit)</td></tr>
+      <tr><td>product</td><td>→ products</td><td>empty until matched</td></tr>
+      <tr><td>supplier_product</td><td>→ supplier_products</td><td></td></tr>
+      <tr><td>units_per_case</td><td>qty</td><td>copied at the time (pack sizes change)</td></tr>
+      <tr><td>cases_invoiced</td><td>qty</td><td></td></tr>
+      <tr><td>cases_received</td><td>qty</td><td>entered by staff at check-in</td></tr>
+      <tr><td>units_received</td><td>qty</td><td>cases received × units per case</td></tr>
+      <tr><td>discrepancy</td><td>choice</td><td>none | short | damaged | substituted | extra</td></tr>
+      <tr><td>case_cost <span class="lock">🔒</span></td><td>money</td><td></td></tr>
+      <tr><td>line_net <span class="lock">🔒</span></td><td>money</td><td></td></tr>
+      <tr><td>vat_rate_pct <span class="lock">🔒</span></td><td>decimal</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Stock ledger</h3>
+  <div class="table-title"><code>stock_movements</code><span>records are only ever added — never edited or deleted</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store</td><td>→ stores</td><td></td></tr>
+      <tr><td>product</td><td>→ products</td><td></td></tr>
+      <tr><td>type</td><td>choice</td><td>opening_balance | receipt | supplier_return | sale | refund | adjustment | count_correction | reversal</td></tr>
+      <tr><td>quantity</td><td>qty</td><td>+ in / − out, never 0</td></tr>
+      <tr><td>unit_cost <span class="lock">🔒</span></td><td>money</td><td>cost at the time</td></tr>
+      <tr><td>reason</td><td>→ adjustment_reasons</td><td>required for adjustments</td></tr>
+      <tr><td>source_type, source_id</td><td></td><td>the delivery line, adjustment, count result or sales line that caused it</td></tr>
+      <tr><td>reverses</td><td>→ stock_movements</td><td>set on reversals</td></tr>
+      <tr><td>occurred_at</td><td>date-time</td><td>when it physically happened</td></tr>
+      <tr><td>note</td><td>text</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>stock_levels</code><span>running totals, changed only by the database functions below</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store + product</td><td></td><td>one row per pair</td></tr>
+      <tr><td>quantity_on_hand</td><td>qty</td><td></td></tr>
+      <tr><td>last_movement_at</td><td>date-time</td><td></td></tr>
+      <tr><td>last_counted_at</td><td>date-time</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>stock_costs</code> <span class="lock">🔒</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store + product</td><td></td><td>one row per pair</td></tr>
+      <tr><td>average_unit_cost</td><td>money</td><td>weighted average (formula in section 6)</td></tr>
+      <tr><td>last_unit_cost</td><td>money</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>adjustment_reasons</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>name</td><td>text</td><td>Waste · Damaged · Expired · Theft/unknown loss · Own use · Found · Correction</td></tr>
+      <tr><td>direction</td><td>choice</td><td>decrease | increase | either</td></tr>
+      <tr><td>note_required</td><td>yes/no</td><td></td></tr>
+      <tr><td>active</td><td>yes/no</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>stock_adjustments</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store, product</td><td></td><td></td></tr>
+      <tr><td>quantity</td><td>qty</td><td>signed; staff may enter cases, which are converted</td></tr>
+      <tr><td>reason</td><td>→ adjustment_reasons</td><td></td></tr>
+      <tr><td>note</td><td>text</td><td></td></tr>
+      <tr><td>estimated_value <span class="lock">🔒</span></td><td>money</td><td>used for the £25 approval limit</td></tr>
+      <tr><td>status</td><td>choice</td><td>auto_approved | pending | approved | rejected</td></tr>
+      <tr><td>decided_by, decided_at, decision_note</td><td></td><td></td></tr>
+      <tr><td>movement</td><td>→ stock_movements</td><td>set once approved</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Counts</h3>
+  <div class="table-title"><code>stock_counts</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store</td><td>→ stores</td><td></td></tr>
+      <tr><td>name</td><td>text</td><td>"Opening count", "Weekly full count"</td></tr>
+      <tr><td>scope</td><td>choice</td><td>opening | full | category | spot</td></tr>
+      <tr><td>category</td><td>→ categories</td><td>for category counts</td></tr>
+      <tr><td>as_of</td><td>date-time</td><td>the moment the count represents (outside trading hours)</td></tr>
+      <tr><td>status</td><td>choice</td><td>in_progress → submitted → approved | cancelled</td></tr>
+      <tr><td>uncounted_policy</td><td>choice</td><td>full counts only: set_to_zero | leave_unchanged</td></tr>
+      <tr><td>submitted_by, submitted_at</td><td></td><td></td></tr>
+      <tr><td>approved_by, approved_at</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>stock_count_lines</code><span>several per product allowed (shelf + stockroom + chiller)</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>count</td><td>→ stock_counts</td><td></td></tr>
+      <tr><td>product</td><td>→ products</td><td></td></tr>
+      <tr><td>location</td><td>text</td><td>Shelf, Stockroom, Chiller…</td></tr>
+      <tr><td>counted_qty</td><td>qty</td><td></td></tr>
+      <tr><td>counted_by, counted_at</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>stock_count_results</code><span>one per product, written on approval</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>count, product</td><td></td><td></td></tr>
+      <tr><td>counted_total</td><td>qty</td><td>sum of all lines for the product</td></tr>
+      <tr><td>expected_qty</td><td>qty</td><td>ledger balance at the count's <code>as_of</code></td></tr>
+      <tr><td>variance_qty</td><td>qty</td><td>counted − expected</td></tr>
+      <tr><td>variance_value <span class="lock">🔒</span></td><td>money</td><td></td></tr>
+      <tr><td>movement</td><td>→ stock_movements</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Imports</h3>
+  <div class="table-title"><code>imports</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store</td><td>→ stores</td><td></td></tr>
+      <tr><td>import_type</td><td>choice</td><td>products | sales</td></tr>
+      <tr><td>file_name, file_path</td><td>text</td><td></td></tr>
+      <tr><td>file_fingerprint</td><td>text</td><td>unique per type — the same file can't be imported twice</td></tr>
+      <tr><td>period_start, period_end</td><td>date</td><td>sales only; periods can't overlap</td></tr>
+      <tr><td>column_mapping</td><td>saved</td><td>which column holds the barcode, quantity, etc.</td></tr>
+      <tr><td>status</td><td>choice</td><td>uploaded → previewed → committed | failed | reversed</td></tr>
+      <tr><td>rows_total, rows_ok, rows_error, rows_unmatched</td><td>number</td><td></td></tr>
+      <tr><td>committed_by, committed_at</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>sales_import_lines</code></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>import</td><td>→ imports</td><td></td></tr>
+      <tr><td>row_number</td><td>number</td><td></td></tr>
+      <tr><td>sale_date</td><td>date</td><td></td></tr>
+      <tr><td>code_in_file, description_in_file</td><td>text</td><td>exactly as in the file</td></tr>
+      <tr><td>quantity</td><td>qty</td><td>negative = refund</td></tr>
+      <tr><td>net_value, gross_value</td><td>money</td><td>if the file includes them</td></tr>
+      <tr><td>product</td><td>→ products</td><td>empty if unmatched</td></tr>
+      <tr><td>status</td><td>choice</td><td>matched | unmatched | ignored</td></tr>
+      <tr><td>movement</td><td>→ stock_movements</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>System</h3>
+  <div class="table-title"><code>alerts</code><span>only one open alert per type + store + product</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store, product</td><td></td><td>product optional</td></tr>
+      <tr><td>type</td><td>choice</td><td>low_stock | negative_stock | unmatched_sales | sales_import_missing | unposted_delivery | count_needs_recount | pending_approval | ledger_mismatch</td></tr>
+      <tr><td>severity</td><td>choice</td><td>info | warning | critical</td></tr>
+      <tr><td>status</td><td>choice</td><td>open → acknowledged → resolved</td></tr>
+      <tr><td>message, details</td><td></td><td></td></tr>
+      <tr><td>first_seen_at, last_seen_at, resolved_at, resolved_by</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>settings</code><span>owner-only; key → value</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Key</th><th>Default</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>adjustment_approval_units</td><td>20</td><td>adjustments above this need approval</td></tr>
+      <tr><td>adjustment_approval_value</td><td>£25</td><td>adjustments above this need approval</td></tr>
+      <tr><td>recount_units</td><td>20</td><td>count differences above this are flagged</td></tr>
+      <tr><td>recount_value</td><td>£25</td><td>count differences above this are flagged</td></tr>
+      <tr><td>unposted_delivery_hours</td><td>24</td><td>alert after this</td></tr>
+      <tr><td>sales_file_format</td><td>saved</td><td>column mapping for the till's sales export</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>audit_log</code><span>written automatically by the database</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>table_name, record_id</td><td></td><td></td></tr>
+      <tr><td>action</td><td>choice</td><td>insert | update | delete</td></tr>
+      <tr><td>old_values, new_values</td><td></td><td></td></tr>
+      <tr><td>changed_by, changed_at</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>How the tables relate</h3>
+  <p>In the diagram below, <code>A ─&lt; B</code> means "one A has many B".</p>
+<pre>
+categories ─&lt; products ─&lt; product_barcodes
+                 ├─&lt; sell_price_history
+                 ├─&lt; supplier_products &gt;─ suppliers ─&lt; supplier_invoices ─&lt; supplier_invoice_lines
+                 │        └─&lt; supplier_cost_history
+                 ├─&lt; stock_movements   (created by delivery lines, adjustments, count results, sales lines)
+                 ├── stock_levels, stock_costs   (one row per product per store)
+                 ├─&lt; stock_adjustments
+                 ├─&lt; stock_count_lines &gt;─ stock_counts ─&lt; stock_count_results
+                 └─&lt; sales_import_lines &gt;─ imports
+</pre>
+
+  <h3>How staff are kept away from costs</h3>
+  <p>Staff screens read from "staff views". A view is a saved query, and these ones leave out every <span class="lock">🔒</span> column. Staff have no direct access to the underlying cost tables.</p>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>View</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td>v_stock_staff</td><td>Products, barcodes and stock on hand</td></tr>
+      <tr><td>v_delivery_check</td><td>Deliveries and their lines, without costs or totals</td></tr>
+      <tr><td>v_movements_staff</td><td>Movement history, without costs</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The only ways stock can change</h3>
+  <p>Each of these is a database function that runs as a single all-or-nothing transaction and checks the user's role first.</p>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Function</th><th>Who</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>check_in_delivery</td><td>Staff+</td><td>Saves received quantities and marks the delivery as checked in</td></tr>
+      <tr><td>post_delivery</td><td>Manager+</td><td>Checks every line is matched, the invoice number is unique and the lines add up to the invoice total. Then writes receipts dated at delivery, records costs, updates average cost and locks the delivery.</td></tr>
+      <tr><td>void_delivery</td><td>Owner</td><td>Writes reversing movements</td></tr>
+      <tr><td>request_adjustment</td><td>Staff+</td><td>Approves automatically under the limits (or when a manager makes it); otherwise queues it for approval</td></tr>
+      <tr><td>decide_adjustment</td><td>Manager+</td><td>Approves or rejects, then writes the movement</td></tr>
+      <tr><td>approve_count</td><td>Manager+</td><td>Blocked until sales are imported up to the count's date; warns about unposted deliveries; writes corrections (or opening balances)</td></tr>
+      <tr><td>commit_sales_import</td><td>Manager+</td><td>Writes sale and refund movements; unmatched lines raise an alert</td></tr>
+      <tr><td>match_sales_line</td><td>Manager+</td><td>Links a product (and can save the barcode), then writes the movement with the original sale date</td></tr>
+      <tr><td>reverse_import</td><td>Owner</td><td>Undoes an import with reversing movements</td></tr>
+      <tr><td>commit_product_import</td><td>Manager+</td><td>Creates or updates products, barcodes and prices</td></tr>
+      <tr><td>check_ledger (nightly)</td><td>System</td><td>Checks that stock levels equal the sum of all movements; raises a critical alert if not</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Future tables (later releases)</h3>
+  <ul>
+    <li><code>expiry_checks</code> — product, expiry date, estimated quantity, status (Release 2)</li>
+    <li><code>report_schedules</code> — which reports are emailed, to whom and when (Release 2)</li>
+    <li><code>ai_extraction_jobs</code> — uploaded file, AI output, model, status, cost (Release 3)</li>
+    <li><code>purchase_orders</code> — orders to suppliers (Release 4)</li>
+    <li><code>forecasts</code> — predicted demand per product (Release 4)</li>
+  </ul>
+</section>
+
+<!-- 8 -->
+<section id="screens">
+  <h2>8. Screens</h2>
+
+  <h3>Navigation</h3>
+  <ul>
+    <li><strong>Owners and managers (desktop sidebar):</strong> Dashboard · Scan · Products · Deliveries · Stock · Suppliers · Sales imports · Alerts · Reports · Settings.</li>
+    <li><strong>Staff (phone bottom bar):</strong> Home · Scan · Deliveries · Counts · More.</li>
+    <li><strong>Viewers:</strong> read-only versions of the manager screens.</li>
+  </ul>
+
+  <h3>MVP screen list</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Screens</th></tr></thead>
+      <tbody>
+        <tr><td>Sign-in</td><td>Login · forgot password · accept invite</td></tr>
+        <tr><td>Home</td><td>Manager dashboard · staff home with large task buttons</td></tr>
+        <tr><td>Scan</td><td>Scanner and product card · unknown-barcode flow (link to an existing product or request a new one)</td></tr>
+        <tr><td>Products</td><td>List · detail (Overview, Barcodes, Suppliers, Stock history) · add/edit · categories · spreadsheet import</td></tr>
+        <tr><td>Deliveries</td><td>List · check-in (phone) · post (desktop) · void</td></tr>
+        <tr><td>Stock</td><td>Adjustments and approval queue · counts (list, counting, review) · movement history</td></tr>
+        <tr><td>Suppliers</td><td>List · detail (codes and pack sizes, cost history <span class="lock">🔒</span>, deliveries)</td></tr>
+        <tr><td>Sales imports</td><td>Upload → check → confirm · import history · unmatched lines</td></tr>
+        <tr><td>Alerts</td><td>List · acknowledge or resolve</td></tr>
+        <tr><td>Reports</td><td>Stock on hand and value <span class="lock">🔒</span> · movements · waste and adjustments · count differences · deliveries</td></tr>
+        <tr><td>Settings</td><td>Users and invites · store · limits · reason codes · VAT · sales file format</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Wireframes</h3>
+
+  <h4>Dashboard (managers, desktop)</h4>
+  <p>The Stock value tile is hidden from anyone without cost access.</p>
+<pre>
+┌──────────────┬────────────────────────────────────────────────────────────┐
+│ ▣ Dashboard  │ Dashboard                                   Main Street ▾  │
+│ ⌖ Scan       │ ┌ Stock value ┐ ┌ Low stock ┐ ┌ Negative ┐ ┌ To approve ┐   │
+│ ▤ Products   │ │  £48,210    │ │    23     │ │    4     │ │     6      │   │
+│ ⇩ Deliveries │ └─────────────┘ └───────────┘ └──────────┘ └────────────┘   │
+│ ⇅ Stock      │ Alerts (12 open)                                [View all] │
+│ ☰ Suppliers  │ ● Critical  Sales for 22 Oct not imported yet              │
+│ ⇪ Sales      │ ● Warning   Fresh Dairy Ltd delivery unposted for 26 h     │
+│ ⚠ Alerts     │ ● Warning   Milk 2L semi-skimmed: stock −6                 │
+│ ▦ Reports    │ Waiting for you              Recent deliveries             │
+│ ⚙ Settings   │ 3 adjustments to approve     Fresh Dairy Ltd  Checked in   │
+│              │ 1 count to review            Valley Foods     Posted       │
+│              │ 18 unmatched sales lines                                   │
+└──────────────┴────────────────────────────────────────────────────────────┘
+</pre>
+
+  <h4>Scan (staff, phone)</h4>
+<pre>
+┌─────────────────────────────┐
+│ ← Scan                      │
+│ ┌─────────────────────────┐ │
+│ │      [ camera view ]    │ │
+│ └─────────────────────────┘ │
+│ or type barcode [_________] │
+├─────────────────────────────┤
+│ Cola 330ml                  │
+│ 5012345678900 · Soft drinks │
+│ In stock (estimated)    46  │
+│ Reorder at              24  │
+│ Last counted        12 Oct  │
+│ [ Count ]  [ Waste/adjust ] │
+│ [ History ]                 │
+└─────────────────────────────┘
+</pre>
+
+  <h4>Delivery check-in (staff, phone) and Post delivery (manager, desktop)</h4>
+<pre>
+┌─────────────────────────────┐
+│ ← Delivery: Fresh Dairy Ltd │
+│ 23 Oct 07:40  [📷 Add photo]│
+│ Scan or search to add item  │
+│ ┌─────────────────────────┐ │
+│ │ Milk 2L semi-skimmed    │ │
+│ │ Case of 4    [ − 6 + ]  │ │
+│ │ = 24 units   Short? ▾   │ │
+│ │ Greek yoghurt 500g      │ │
+│ │ Case of 6    [ − 2 + ]  │ │
+│ └─────────────────────────┘ │
+│ 2 lines · 36 units          │
+│ [    Finish check-in    ]   │
+└─────────────────────────────┘
+</pre>
+<pre>
+Post delivery — Fresh Dairy Ltd                                         Checked in ✓
+┌ Invoice photo ──┐  Invoice no. [INV-20931]  Date [23/10/2026]
+│                 │  Line  Product          Cases Units Case cost Unit cost  vs last
+│  (zoomable)     │  1     Milk 2L semi       6     24   £4.20     £1.0500    +5.0% ▲
+│                 │  2     Greek yog. 500g    2     12   £6.90     £1.1500      —
+│                 │  3     Delivery charge    non-stock £5.00
+└─────────────────┘  Net £44.00 + VAT £1.00 = £45.00   ✓ matches invoice total
+                     [Save draft]                         [Post delivery]
+</pre>
+
+  <h4>Count review (manager, desktop)</h4>
+<pre>
+Weekly full count · as of 25 Oct 22:30      Sales imported up to 25 Oct ✓   Unposted deliveries: none ✓
+[☑ Differences only]
+Product              Counted  Expected  Difference   Value 🔒
+Milk 2L semi-skimmed     18        24        −6      −£6.30
+Cola 330ml              120        96       +24     +£10.80    ⚠ over 20 units: recount?
+Not counted: 37 products     ( ) Set to zero   (•) Leave unchanged
+                                        [Request recounts]   [Approve count]
+</pre>
+
+  <h4>Sales import (manager, desktop)</h4>
+<pre>
+Import sales    ① Upload   ② Check   ③ Confirm
+sales_2026-10-22.csv · 1,284 rows · 22 Oct 2026
+✓ 1,262 matched    ⚠ 18 unmatched (saved to match later)    ✗ 4 errors
+Row 77: quantity "abc" is not a number …                    [Skip error rows] or fix and re-upload
+[Back]                                                      [Import 1,280 rows →]
+</pre>
+</section>
+
+<!-- 9 -->
+<section id="security">
+  <h2>9. Security, validation and testing</h2>
+
+  <h3>Security</h3>
+  <ul>
+    <li><strong>Invite-only accounts</strong> (public sign-up off). Optional two-factor login for owners and managers.</li>
+    <li><strong>Row Level Security on every table.</strong> These are rules inside the database that decide which rows each user can see or change. Even if the app has a bug, the database refuses anything that isn't allowed.</li>
+    <li>Stock tables can only be changed through the database functions in section 7. Staff read cost-free views.</li>
+    <li><strong>Secret keys</strong> (database admin key, Anthropic key) live only on the server, never in the browser or in Git.</li>
+    <li><strong>Invoice files</strong> are stored privately and shown through short-lived links. Uploads are limited to approved file types (PDF, JPG, PNG, HEIC) and sizes.</li>
+    <li><strong>Audit log</strong> of all changes, and posted records are locked.</li>
+    <li><strong>AI output</strong> is treated as a suggestion. It's checked against the rules, approved by a person, and AI spending has a monthly cap.</li>
+    <li><strong>Daily backups</strong> (Supabase Pro), with a test restore before go-live.</li>
+    <li><strong>Automatic logout</strong> after inactivity on shop-floor devices.</li>
+    <li><strong>UK GDPR:</strong> personal data is kept to a minimum (staff names and emails, supplier contacts).</li>
+  </ul>
+
+  <h3>Validation happens in three layers</h3>
+  <ol>
+    <li><strong>Form:</strong> instant feedback for the user (Zod).</li>
+    <li><strong>Server:</strong> the same Zod rules again, because a browser can never be trusted.</li>
+    <li><strong>Database:</strong> required fields, unique barcodes and invoice numbers, quantity can't be zero, links must point to real rows.</li>
+  </ol>
+  <p>Specific checks:</p>
+  <ul>
+    <li>Barcode check digits (EAN-13, EAN-8, UPC-A).</li>
+    <li>"You entered 2,400. Did you mean 24 cases?" warnings.</li>
+    <li>Invoice lines must add up to the invoice total. This catches typos and, later, AI errors.</li>
+    <li>Invoice dates can't be in the future.</li>
+    <li>Every CSV import shows a preview with errors for each row before anything is saved.</li>
+  </ul>
+
+  <h3>Testing</h3>
+  <ul>
+    <li><strong>Unit tests (Vitest):</strong> pack conversions, VAT, margin and average cost calculations, alert rules.</li>
+    <li><strong>Database tests:</strong> for example "staff can't see costs", "an invoice can't be posted twice", "a failed post leaves stock unchanged".</li>
+    <li><strong>Import tests</strong> using sample and real till files, messy ones included.</li>
+    <li><strong>End-to-end tests (Playwright):</strong> a robot clicks through receive, count, adjust and import, at both phone and desktop sizes.</li>
+    <li><strong>Nightly ledger check:</strong> stock levels must equal the sum of all movements.</li>
+    <li><strong>AI evaluation set</strong> (Release 3): 30–50 real invoices with the correct answers typed up, so accuracy is measured before AI is switched on.</li>
+    <li><strong>Automatic checks on every code change</strong> in GitHub (lint, type check, tests, build).</li>
+    <li><strong>Pilot:</strong> run the system alongside the current process for 2–4 weeks before relying on it.</li>
+  </ul>
+</section>
+
+<!-- 10 -->
+<section id="phases">
+  <h2>10. Development phases</h2>
+  <p>Each phase ends with a working, tested and deployed version that the owner reviews before the next one starts.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Phase</th><th>Goal</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr><td><strong>0</strong></td><td>Setup</td><td>Project skeleton · GitHub repository · development Supabase and Vercel projects (free plans) · automatic checks · sample data (fictional products, suppliers and daily sales)</td></tr>
+        <tr><td><strong>1</strong></td><td>Foundation</td><td>Logins and roles, store, categories, products, barcodes, selling prices, suppliers, supplier codes, audit log, <strong>product spreadsheet import</strong> (so thousands of products don't have to be typed in by hand)</td></tr>
+        <tr><td><strong>2</strong></td><td>Stock ledger</td><td>Movement records, stock levels and costs, database functions, typed-in deliveries (check-in and posting), adjustments and approvals, movement history, opening balance</td></tr>
+        <tr><td><strong>3</strong></td><td>Sales</td><td>Daily till sales import, matching, unmatched-lines list, missing-sales-file alert. <strong>Estimated stock goes live here.</strong></td></tr>
+        <tr><td><strong>4</strong></td><td>Mobile and counts</td><td>Installable app, scanning, counts and count review, dashboard, alerts, basic reports. <strong>MVP pilot in store.</strong></td></tr>
+        <tr><td><strong>5</strong></td><td>Release 2</td><td>Expiry, prices and margins, slow sellers, discrepancies, email reports, reorder suggestions</td></tr>
+        <tr><td><strong>6</strong></td><td>Release 3</td><td>AI invoice reading (upload first, then email)</td></tr>
+        <tr><td><strong>7</strong></td><td>Release 4</td><td>AI assistant, forecasting, direct till connection, purchase orders</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Changes from the proposal: Phase 1 uses a general product spreadsheet import instead of a till product-list import. Phase 3 no longer includes a "missing from till" report; the sales import and unmatched-lines list stay.</p>
+</section>
+
+<!-- 11 -->
+<section id="sample-data">
+  <h2>11. Sample data</h2>
+  <p>Until real shop data is available, the <code>sample-data/</code> folder holds test data generated by <code>scripts/sample-data/generate.ts</code>:</p>
+  <ul>
+    <li><strong>Products</strong> across the main supermarket departments, with categories, sizes, VAT codes, selling prices, barcodes, case sizes, till codes for loose items and reorder levels.</li>
+    <li><strong>Suppliers</strong> and their product codes, pack sizes and costs.</li>
+    <li><strong>28 days of daily sales exports</strong>, one CSV file per day, including refunds and a few unknown items to exercise the unmatched-lines list.</li>
+  </ul>
+  <div class="warn">
+    All brands, suppliers and barcodes are <strong>fictional</strong>. The sales file layout is a stand-in: the real till's export format is still to be confirmed, and the importer's column mapping will be set up for it in Phase 3.
+  </div>
+</section>
+
+<footer>
+  AI Supermarket Inventory System · Detailed design approved 23 Oct 2026 · Changes are agreed with the owner before they are built.
+</footer>
+
+</main>
+</div>
+</div>
+</body>
+</html>
