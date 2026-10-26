@@ -5,3 +5,6 @@ next-env.d.ts
 /docs/
 /supabase/.temp/
 /.vercel/
+/src/lib/supabase/database.types.ts
+/test-results/
+/playwright-report/

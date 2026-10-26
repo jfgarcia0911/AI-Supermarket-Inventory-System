@@ -125,9 +125,9 @@
 
 <header class="top">
   <h1>AI Supermarket Inventory System — Detailed Design</h1>
-  <p class="meta">Approved 23 Oct 2026 · Phase 0</p>
+  <p class="meta">Approved 23 Oct 2026 · Phase 1 complete (27 Oct 2026)</p>
   <p>This document is the agreed design for the first version of the system. It is written for two readers: the shop owner (plain English, with technical terms explained) and the developers who build and maintain it. Any change to this design should be agreed with the owner before it is built.</p>
-  <span class="badge">Status: approved for Phase 0</span>
+  <span class="badge">Status: Phase 1 complete · Phase 2 next</span>
 </header>
 
 <div class="layout">
@@ -215,7 +215,8 @@
       <thead><tr><th>Item</th><th>Needed by</th><th>Working default until answered</th></tr></thead>
       <tbody>
         <tr><td>Which till system, plus one real daily sales export</td><td>Phase 3</td><td>Sample export format in <code>sample-data/</code>; column mapping makes the importer flexible</td></tr>
-        <tr><td>Approximate number of products; weighed items and in-store printed barcodes</td><td>Phase 1</td><td>Design handles items and kg; in-store barcode rule confirmed when a sample is seen</td></tr>
+        <tr><td>Approximate number of products; weighed items and in-store printed barcodes</td><td>Phase 3</td><td>Phase 1 handles items and kg (weighed items use till codes); the in-store barcode rule is confirmed when a real sample is seen</td></tr>
+        <tr><td>Email service for "forgot password" and alert emails</td><td>Release 2</td><td>Supabase's built-in email only reaches addresses in the Supabase organisation; owners reset passwords from Settings &gt; Users meanwhile</td></tr>
         <tr><td>Invoice volumes and formats (paper, PDF, portal); dedicated invoices@ address</td><td>Release 3</td><td>—</td></tr>
         <tr><td>12+ months of sales history for forecasting</td><td>Release 4</td><td>—</td></tr>
         <tr><td>Top reports, export formats, accounting software</td><td>Phase 4</td><td>The MVP report list in section 8</td></tr>
@@ -244,10 +245,12 @@
         <tr><td>Post invoices (confirm costs)</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
         <tr><td>Approve adjustments and count differences</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
         <tr><td>Edit products, prices, suppliers, reorder levels</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
-        <tr><td>Import sales and product spreadsheets</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>Import sales, product and supplier price-list spreadsheets</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td></tr>
         <tr><td>Reports</td><td class="c">✅</td><td class="c">✅</td><td class="c">Basic only</td><td class="c">✅</td></tr>
         <tr><td>Reverse posted records (void deliveries, reverse imports)</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td><td class="c">❌</td></tr>
         <tr><td>Users, roles, settings</td><td class="c">✅</td><td class="c">❌</td><td class="c">❌</td><td class="c">❌</td></tr>
+        <tr><td>See the import history</td><td class="c">✅</td><td class="c">✅</td><td class="c">❌</td><td class="c">✅</td></tr>
+        <tr><td>Change own name and password</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td><td class="c">✅</td></tr>
       </tbody>
     </table>
   </div>
@@ -255,6 +258,16 @@
     <strong>Receiving is split into two steps.</strong> Staff check what arrived (quantities). A manager then confirms the invoice costs, which "posts" the delivery into stock.<br>
     <strong>Permissions are enforced inside the database,</strong> not just by hiding buttons (see section 9).
   </div>
+
+  <h3>How accounts work (built in Phase 1)</h3>
+  <ul>
+    <li><strong>Owners create every account</strong> in Settings &gt; Users: name, email and role. Public sign-up is switched off, and there are no email invitations.</li>
+    <li><strong>Each new account gets a temporary password</strong>, shown once to the owner, who passes it on in person or by phone. The first time the person signs in, they must choose their own password before they can do anything else (<code>profiles.must_change_password</code>).</li>
+    <li><strong>Passwords</strong> need at least 10 characters, with letters and numbers.</li>
+    <li><strong>Owners can reset a password</strong> (the person gets a new temporary one and chooses their own again) and <strong>switch an account off</strong>. Switching off also blocks signing in straight away; everything the person did stays in the history. Accounts are never deleted.</li>
+    <li><strong>Owners cannot change their own role or switch themselves off</strong>, and there must always be at least one active owner, so nobody can lock the shop out.</li>
+    <li><strong>"Forgot password" emails</strong> work, but Supabase's built-in email only reaches addresses that belong to the Supabase organisation. Until a proper email service is connected (planned with the Release 2 email reports), staff who forget their password ask the owner to reset it.</li>
+  </ul>
 </section>
 
 <!-- 4 -->
@@ -268,7 +281,7 @@
         <tr>
           <td><strong>1 (MVP)</strong></td>
           <td>Stock numbers you can trust</td>
-          <td>Logins and roles · products, categories, multiple barcodes, pack sizes, VAT, selling prices, reorder levels · <strong>product spreadsheet import</strong> · suppliers and their product codes and costs · opening stock count · <strong>typing in deliveries by hand</strong>, with a photo or PDF of the invoice attached · adjustments with reasons and approvals · <strong>daily till sales import (CSV)</strong> with an unmatched-lines list, which drives estimated stock · stock counts with barcode scanning · movement history · dashboard · in-app alerts (low stock, negative stock, missing sales file, unposted deliveries, recounts, approvals) · basic reports</td>
+          <td>Logins and roles · products, categories, multiple barcodes, pack sizes, VAT, selling prices, reorder levels · <strong>product spreadsheet import</strong> · suppliers and their product codes and costs · <strong>supplier price list import</strong> · opening stock count · <strong>typing in deliveries by hand</strong>, with a photo or PDF of the invoice attached · adjustments with reasons and approvals · <strong>daily till sales import (CSV)</strong> with an unmatched-lines list, which drives estimated stock · stock counts with barcode scanning · movement history · dashboard · in-app alerts (low stock, negative stock, missing sales file, unposted deliveries, recounts, approvals) · basic reports</td>
         </tr>
         <tr>
           <td><strong>2</strong></td>
@@ -339,6 +352,12 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
 
   <h3>Environments</h3>
   <p>There are separate <strong>development</strong> and <strong>live</strong> databases. Testing never touches real shop data. Development runs on free plans; paid plans are only needed before the in-store pilot.</p>
+
+  <h3>Development notes</h3>
+  <ul>
+    <li><strong>Node.js 24 LTS is required.</strong> The Supabase library no longer runs on Node 20, so the app, the seed script and the database tests all need Node 24 (see <code>.nvmrc</code>).</li>
+    <li><strong>Demo accounts</strong> <code>owner@example.com</code>, <code>manager@example.com</code>, <code>staff@example.com</code> and <code>viewer@example.com</code> exist only in the development database. They are created, together with the fictional sample data, by <code>npm run db:seed-dev</code>; their password is <code>DEMO_PASSWORD</code> in <code>.env.local</code>. They must never be created in the live database.</li>
+  </ul>
 
   <h3>Rough running costs (check current prices)</h3>
   <ul>
@@ -427,6 +446,7 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
     <li><code>money</code> is an exact decimal with 4 places, before VAT unless noted.</li>
     <li><span class="lock">🔒</span> marks cost data. Only owners, managers and viewers can see it.</li>
   </ul>
+  <p class="note"><strong>Built in Phase 1:</strong> <code>stores</code>, <code>profiles</code>, <code>store_members</code>, <code>settings</code>, <code>vat_rates</code>, <code>audit_log</code>, <code>categories</code>, <code>products</code>, <code>product_barcodes</code>, <code>sell_price_history</code>, <code>suppliers</code>, <code>supplier_products</code>, <code>supplier_cost_history</code> and <code>imports</code>, plus the views listed under "Views" below. The delivery, stock ledger, count, sales and alert tables follow in Phases 2–4, as designed here. The exact definitions are the migration files in <code>supabase/migrations/</code>.</p>
 
   <h3>Access</h3>
   <div class="table-title"><code>stores</code></div>
@@ -449,6 +469,7 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>email</td><td>text</td><td>required, unique</td></tr>
       <tr><td>role</td><td>choice</td><td>owner | manager | staff | viewer</td></tr>
       <tr><td>active</td><td>yes/no</td><td>switched off, never deleted</td></tr>
+      <tr><td>must_change_password</td><td>yes/no</td><td>set while the person still has a temporary password; they must choose their own before using the app</td></tr>
     </tbody>
   </table></div>
 
@@ -493,7 +514,7 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>size</td><td>text</td><td>e.g. "330ml", "6 x 25g"</td></tr>
       <tr><td>category</td><td>→ categories</td><td>required</td></tr>
       <tr><td>sold_by</td><td>choice</td><td>each | kg</td></tr>
-      <tr><td>vat_rate</td><td>→ vat_rates</td><td>required</td></tr>
+      <tr><td>vat_code</td><td>→ vat_rates</td><td>required</td></tr>
       <tr><td>sell_price</td><td>money</td><td>shelf price <strong>including</strong> VAT; maintained in this system</td></tr>
       <tr><td>reorder_point</td><td>qty</td><td>low-stock alert at or below this</td></tr>
       <tr><td>reorder_qty</td><td>qty</td><td>suggested order amount</td></tr>
@@ -535,6 +556,9 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>account_number</td><td>text</td><td>your account number with them</td></tr>
       <tr><td>contact_name, phone, email</td><td>text</td><td></td></tr>
       <tr><td>payment_terms_days</td><td>number</td><td></td></tr>
+      <tr><td>delivery_days</td><td>text</td><td>e.g. "Tue, Fri"</td></tr>
+      <tr><td>lead_time_days</td><td>number</td><td>days from ordering to delivery; default 1 (for reorder suggestions)</td></tr>
+      <tr><td>notes</td><td>text</td><td></td></tr>
       <tr><td>active</td><td>yes/no</td><td></td></tr>
     </tbody>
   </table></div>
@@ -561,7 +585,8 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>case_cost</td><td>money</td><td></td></tr>
       <tr><td>unit_cost</td><td>money</td><td>case cost ÷ units per case</td></tr>
       <tr><td>effective_date</td><td>date</td><td></td></tr>
-      <tr><td>invoice_line</td><td>→ supplier_invoice_lines</td><td></td></tr>
+      <tr><td>source</td><td>choice</td><td>invoice | import | manual — where the cost came from</td></tr>
+      <tr><td>invoice_line</td><td>→ supplier_invoice_lines</td><td>filled in for costs from posted deliveries (Phase 2 onwards)</td></tr>
       <tr><td>change_pct</td><td>decimal</td><td>vs. that supplier's previous cost</td></tr>
     </tbody>
   </table></div>
@@ -720,14 +745,16 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
   <div class="table-wrap"><table class="db">
     <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td>store</td><td>→ stores</td><td></td></tr>
-      <tr><td>import_type</td><td>choice</td><td>products | sales</td></tr>
-      <tr><td>file_name, file_path</td><td>text</td><td></td></tr>
-      <tr><td>file_fingerprint</td><td>text</td><td>unique per type — the same file can't be imported twice</td></tr>
+      <tr><td>import_type</td><td>choice</td><td>products | supplier_products | sales</td></tr>
+      <tr><td>store</td><td>→ stores</td><td>sales files only</td></tr>
+      <tr><td>supplier</td><td>→ suppliers</td><td>supplier price lists only</td></tr>
+      <tr><td>file_name, file_path</td><td>text</td><td>the file itself stays on the user's computer for product and price-list imports</td></tr>
+      <tr><td>file_fingerprint</td><td>text</td><td>SHA-256 of the file. Only <strong>sales</strong> files are blocked from being imported twice. Re-importing a product list or price list is allowed and changes nothing if nothing has changed.</td></tr>
       <tr><td>period_start, period_end</td><td>date</td><td>sales only; periods can't overlap</td></tr>
       <tr><td>column_mapping</td><td>saved</td><td>which column holds the barcode, quantity, etc.</td></tr>
-      <tr><td>status</td><td>choice</td><td>uploaded → previewed → committed | failed | reversed</td></tr>
-      <tr><td>rows_total, rows_ok, rows_error, rows_unmatched</td><td>number</td><td></td></tr>
+      <tr><td>status</td><td>choice</td><td>committed | failed | reversed. Previews are never saved.</td></tr>
+      <tr><td>rows_total, rows_ok, rows_error, rows_unmatched</td><td>number</td><td>rows_error = rows with problems the user chose to skip</td></tr>
+      <tr><td>summary</td><td>saved</td><td>what the import did, e.g. new, updated and unchanged products, costs recorded, price rises</td></tr>
       <tr><td>committed_by, committed_at</td><td></td><td></td></tr>
     </tbody>
   </table></div>
@@ -771,7 +798,7 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>recount_units</td><td>20</td><td>count differences above this are flagged</td></tr>
       <tr><td>recount_value</td><td>£25</td><td>count differences above this are flagged</td></tr>
       <tr><td>unposted_delivery_hours</td><td>24</td><td>alert after this</td></tr>
-      <tr><td>sales_file_format</td><td>saved</td><td>column mapping for the till's sales export</td></tr>
+      <tr><td>sales_file_format</td><td>saved</td><td>column mapping for the till's sales export (added in Phase 3)</td></tr>
     </tbody>
   </table></div>
 
@@ -785,6 +812,20 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>changed_by, changed_at</td><td></td><td></td></tr>
     </tbody>
   </table></div>
+
+  <h3>Views (built in Phase 1)</h3>
+  <p>A view is a saved query that lists and screens read from. All of these run as the signed-in user, so the same security rules apply as for the tables underneath: stock staff see no rows in the cost view.</p>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>View</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td>category_paths</td><td>Every category with its full path, e.g. "Dairy &amp; Eggs &gt; Milk &amp; Cream"</td></tr>
+      <tr><td>category_overview</td><td>Categories with their path and number of active products</td></tr>
+      <tr><td>product_overview</td><td>One row per product with its category path, main barcode and all active barcodes, for lists and search</td></tr>
+      <tr><td>supplier_overview</td><td>Suppliers with their number of products</td></tr>
+      <tr><td>supplier_product_latest_costs <span class="lock">🔒</span></td><td>The latest case and unit cost for each supplier product</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Lists use these views to count rows in the database, because the database API returns at most 1,000 rows per request.</p>
 
   <h3>How the tables relate</h3>
   <p>In the diagram below, <code>A ─&lt; B</code> means "one A has many B".</p>
@@ -801,7 +842,7 @@ categories ─&lt; products ─&lt; product_barcodes
 </pre>
 
   <h3>How staff are kept away from costs</h3>
-  <p>Staff screens read from "staff views". A view is a saved query, and these ones leave out every <span class="lock">🔒</span> column. Staff have no direct access to the underlying cost tables.</p>
+  <p>In Phase 1, every cost lives in its own table (<code>supplier_cost_history</code>) that stock staff cannot read at all; product and supplier screens simply hide the cost columns from them. From Phase 2, tables that mix quantities and costs (deliveries, movements) are read by staff through "staff views". A view is a saved query, and these ones leave out every <span class="lock">🔒</span> column. Staff have no direct access to the underlying cost tables.</p>
   <div class="table-wrap"><table class="db">
     <thead><tr><th>View</th><th>Shows</th></tr></thead>
     <tbody>
@@ -811,7 +852,25 @@ categories ─&lt; products ─&lt; product_barcodes
     </tbody>
   </table></div>
 
-  <h3>The only ways stock can change</h3>
+  <h3>Database functions built in Phase 1</h3>
+  <p>Changes that must happen together, or that need rules beyond "who may edit this table", go through these functions. Each runs as a single all-or-nothing transaction.</p>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Function</th><th>Who</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>import_products</td><td>Owner, manager</td><td>Adds and updates products, categories, barcodes and selling prices from a spreadsheet. Products are recognised by barcode, then till code; blank optional cells never wipe out saved values. <strong>Preview mode</strong> works everything out, reports it with a plain-English problem for each bad row, then undoes it. <strong>Real mode</strong> is all-or-nothing.</td></tr>
+      <tr><td>import_supplier_products</td><td>Owner, manager</td><td>The same for a supplier price list: their codes, case sizes, preferred supplier and case costs (a cost is only recorded when it differs from the latest one). Same preview and real modes.</td></tr>
+      <tr><td>create_product</td><td>Owner, manager</td><td>Adds a product and, optionally, its main barcode in one step</td></tr>
+      <tr><td>set_primary_barcode</td><td>Owner, manager</td><td>Makes one single-item barcode the product's main barcode</td></tr>
+      <tr><td>save_supplier_product</td><td>Owner, manager</td><td>Adds or changes a supplier's code and case size for one of our products; marking it preferred takes the flag from the product's other suppliers</td></tr>
+      <tr><td>record_supplier_cost</td><td>Owner, manager</td><td>Records a new case cost by hand, with the change against the previous cost</td></tr>
+      <tr><td>set_user_role, set_user_active</td><td>Owner</td><td>Changes someone's role or switches their account off or on. Owners cannot change themselves, and there must always be one active owner.</td></tr>
+      <tr><td>update_my_name</td><td>Any user</td><td>Changes your own display name</td></tr>
+      <tr><td>mark_password_changed</td><td>Any user</td><td>Clears the "must choose a password" flag after you have chosen your own</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Creating accounts and resetting passwords needs Supabase's admin access, so those run in the app's server code after it has checked the person is an owner. The secret key never reaches the browser.</p>
+
+  <h3>The only ways stock can change (planned, Phase 2 onwards)</h3>
   <p>Each of these is a database function that runs as a single all-or-nothing transaction and checks the user's role first.</p>
   <div class="table-wrap"><table class="db">
     <thead><tr><th>Function</th><th>Who</th><th>What it does</th></tr></thead>
@@ -825,7 +884,6 @@ categories ─&lt; products ─&lt; product_barcodes
       <tr><td>commit_sales_import</td><td>Manager+</td><td>Writes sale and refund movements; unmatched lines raise an alert</td></tr>
       <tr><td>match_sales_line</td><td>Manager+</td><td>Links a product (and can save the barcode), then writes the movement with the original sale date</td></tr>
       <tr><td>reverse_import</td><td>Owner</td><td>Undoes an import with reversing movements</td></tr>
-      <tr><td>commit_product_import</td><td>Manager+</td><td>Creates or updates products, barcodes and prices</td></tr>
       <tr><td>check_ledger (nightly)</td><td>System</td><td>Checks that stock levels equal the sum of all movements; raises a critical alert if not</td></tr>
     </tbody>
   </table></div>
@@ -856,7 +914,7 @@ categories ─&lt; products ─&lt; product_barcodes
     <table>
       <thead><tr><th>Area</th><th>Screens</th></tr></thead>
       <tbody>
-        <tr><td>Sign-in</td><td>Login · forgot password · accept invite</td></tr>
+        <tr><td>Sign-in</td><td>Login · forgot password · choose your own password (first sign-in with a temporary password, or from a reset link)</td></tr>
         <tr><td>Home</td><td>Manager dashboard · staff home with large task buttons</td></tr>
         <tr><td>Scan</td><td>Scanner and product card · unknown-barcode flow (link to an existing product or request a new one)</td></tr>
         <tr><td>Products</td><td>List · detail (Overview, Barcodes, Suppliers, Stock history) · add/edit · categories · spreadsheet import</td></tr>
@@ -866,10 +924,34 @@ categories ─&lt; products ─&lt; product_barcodes
         <tr><td>Sales imports</td><td>Upload → check → confirm · import history · unmatched lines</td></tr>
         <tr><td>Alerts</td><td>List · acknowledge or resolve</td></tr>
         <tr><td>Reports</td><td>Stock on hand and value <span class="lock">🔒</span> · movements · waste and adjustments · count differences · deliveries</td></tr>
-        <tr><td>Settings</td><td>Users and invites · store · limits · reason codes · VAT · sales file format</td></tr>
+        <tr><td>Settings</td><td>Users (add with a temporary password, change role, reset password, switch off) · store · limits · reason codes · VAT · sales file format</td></tr>
+        <tr><td>Imports</td><td>Choose a file → match the columns → preview → import · import history</td></tr>
+        <tr><td>Account</td><td>Your name · change password · sign out</td></tr>
       </tbody>
     </table>
   </div>
+
+  <h3>Built in Phase 1</h3>
+  <ul>
+    <li><strong>Navigation:</strong> a sidebar on desktop that becomes a slide-out menu on phones. Stock staff don't see Imports or Settings; only owners see Settings and Users.</li>
+    <li><strong>Sign-in:</strong> login, forgot password, and "choose a new password" (forced on first sign-in).</li>
+    <li><strong>Dashboard:</strong> counts of products, categories and suppliers, products missing a selling price, and the latest imports.</li>
+    <li><strong>Products:</strong> search by name, brand, barcode or till code, with category and status filters · product page with details, barcodes (add, make main, remove), suppliers with case costs and margins <span class="lock">🔒</span>, and selling-price history · add and edit · switch off.</li>
+    <li><strong>Categories:</strong> nested list with product counts · add · edit (a category with active products or sub-categories cannot be switched off).</li>
+    <li><strong>Suppliers:</strong> list · supplier page with their products, codes, case sizes and latest costs <span class="lock">🔒</span> · add a product link · edit a link with its cost history <span class="lock">🔒</span> · add, edit and switch off suppliers.</li>
+    <li><strong>Imports:</strong> products and supplier price lists from CSV or Excel (.xlsx), with downloadable templates, and the import history.</li>
+    <li><strong>Settings:</strong> shop details, limits, VAT rates (read-only) and Users.</li>
+    <li><strong>Account:</strong> your name, change password, sign out.</li>
+  </ul>
+
+  <h3>How imports work</h3>
+  <ul>
+    <li><strong>Two kinds in Release 1 so far:</strong> <em>Products</em> (category, name, brand, size, sold by, VAT, selling price, barcode, case barcode and size, till code, reorder levels) and <em>Supplier price list</em> (the supplier's code and description, our product's barcode or till code, units per case, case cost before VAT, preferred yes/no). If a price list covers several suppliers, rows for the other suppliers are left out.</li>
+    <li><strong>The file is read in the browser</strong> (CSV or Excel .xlsx, up to 20,000 rows). Only the cleaned rows are sent to the server.</li>
+    <li><strong>Columns are matched automatically</strong> by their headings ("EAN", "PLU", "Selling price" and so on). The user checks and corrects the matches.</li>
+    <li><strong>The preview shows exactly what will happen</strong> (new, updated, unchanged) and a plain-English problem for each bad row, such as "Barcode was shortened by Excel" or "Each row needs a barcode or a till code". Nothing is saved yet.</li>
+    <li><strong>Bad rows are skipped only when the user confirms</strong> ("Import 250 rows and skip 6"). When the file matches what is already saved, the preview says "Nothing to import".</li>
+  </ul>
 
   <h3>Wireframes</h3>
 
@@ -966,7 +1048,8 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
 
   <h3>Security</h3>
   <ul>
-    <li><strong>Invite-only accounts</strong> (public sign-up off). Optional two-factor login for owners and managers.</li>
+    <li><strong>Owner-created accounts only</strong> (public sign-up is off; no email invitations). Owners add people in Settings &gt; Users with a temporary password, and each person must choose their own the first time they sign in. Passwords need at least 10 characters with letters and numbers. Optional two-factor login for owners and managers later.</li>
+    <li><strong>Switching an account off</strong> blocks signing in straight away, as well as all access to data. Owners can reset a forgotten password by issuing a new temporary one. "Forgot password" emails only reach addresses in the Supabase organisation until a proper email service is connected (Release 2).</li>
     <li><strong>Row Level Security on every table.</strong> These are rules inside the database that decide which rows each user can see or change. Even if the app has a bug, the database refuses anything that isn't allowed.</li>
     <li>Stock tables can only be changed through the database functions in section 7. Staff read cost-free views.</li>
     <li><strong>Secret keys</strong> (database admin key, Anthropic key) live only on the server, never in the browser or in Git.</li>
@@ -990,10 +1073,25 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
     <li>"You entered 2,400. Did you mean 24 cases?" warnings.</li>
     <li>Invoice lines must add up to the invoice total. This catches typos and, later, AI errors.</li>
     <li>Invoice dates can't be in the future.</li>
-    <li>Every CSV import shows a preview with errors for each row before anything is saved.</li>
+    <li>Every spreadsheet import shows a preview with errors for each row before anything is saved.</li>
+    <li>Barcodes that Excel has shortened (for example "5.06E+12") or that have lost a leading zero are spotted and explained.</li>
   </ul>
 
   <h3>Testing</h3>
+  <h4>In place after Phase 1</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tests</th><th>How many</th><th>What they prove</th><th>Where they run</th></tr></thead>
+      <tbody>
+        <tr><td>Unit tests (<code>npm test</code>)</td><td>47</td><td>Barcode check digits, reading and checking spreadsheet rows, temporary passwords, the sample data</td><td>Every change, in GitHub</td></tr>
+        <tr><td>Database security tests (<code>npm run test:db</code>)</td><td>17</td><td>Sign in as each demo role against the development database: signed-out visitors see nothing, stock staff can't see costs or change anything, viewers can read costs but not change them, only owners manage users, nobody can lock themselves out, previews save nothing</td><td>A developer's computer</td></tr>
+        <tr><td>Browser tests (<code>npm run test:e2e</code>)</td><td>16</td><td>A robot signs in and clicks through the main screens on desktop and phone sizes: sign-in, products, suppliers, categories, users, import preview, a file with problems, editing a product, what stock staff can't see</td><td>A developer's computer</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">GitHub runs lint, the type check, formatting, the unit tests, the sample-data check and the build on every change. The database and browser tests need the development database's secrets, so for now they run on a developer's computer.</p>
+
+  <h4>Planned for later phases</h4>
   <ul>
     <li><strong>Unit tests (Vitest):</strong> pack conversions, VAT, margin and average cost calculations, alert rules.</li>
     <li><strong>Database tests:</strong> for example "staff can't see costs", "an invoice can't be posted twice", "a failed post leaves stock unchanged".</li>
@@ -1014,8 +1112,8 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
     <table>
       <thead><tr><th>Phase</th><th>Goal</th><th>Contents</th></tr></thead>
       <tbody>
-        <tr><td><strong>0</strong></td><td>Setup</td><td>Project skeleton · GitHub repository · development Supabase and Vercel projects (free plans) · automatic checks · sample data (fictional products, suppliers and daily sales)</td></tr>
-        <tr><td><strong>1</strong></td><td>Foundation</td><td>Logins and roles, store, categories, products, barcodes, selling prices, suppliers, supplier codes, audit log, <strong>product spreadsheet import</strong> (so thousands of products don't have to be typed in by hand)</td></tr>
+        <tr><td><strong>0</strong> ✅ Done</td><td>Setup</td><td>Project skeleton · GitHub repository · development Supabase and Vercel projects (free plans) · automatic checks · sample data (fictional products, suppliers and daily sales)</td></tr>
+        <tr><td><strong>1</strong> ✅ Done (27 Oct 2026)</td><td>Foundation</td><td>Logins and roles, store, categories, products, barcodes, selling prices, suppliers, supplier codes, audit log, <strong>product spreadsheet import</strong> (so thousands of products don't have to be typed in by hand). Also delivered: <strong>supplier price list import</strong>, dashboard (counts, missing selling prices, recent imports), product pages with barcodes, suppliers, margins and price history, categories, suppliers with cost history, import history, settings (shop, limits, VAT rates), users and the account page.</td></tr>
         <tr><td><strong>2</strong></td><td>Stock ledger</td><td>Movement records, stock levels and costs, database functions, typed-in deliveries (check-in and posting), adjustments and approvals, movement history, opening balance</td></tr>
         <tr><td><strong>3</strong></td><td>Sales</td><td>Daily till sales import, matching, unmatched-lines list, missing-sales-file alert. <strong>Estimated stock goes live here.</strong></td></tr>
         <tr><td><strong>4</strong></td><td>Mobile and counts</td><td>Installable app, scanning, counts and count review, dashboard, alerts, basic reports. <strong>MVP pilot in store.</strong></td></tr>
@@ -1025,7 +1123,8 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
       </tbody>
     </table>
   </div>
-  <p class="note">Changes from the proposal: Phase 1 uses a general product spreadsheet import instead of a till product-list import. Phase 3 no longer includes a "missing from till" report; the sales import and unmatched-lines list stay.</p>
+  <p class="note">Changes from the proposal: Phase 1 uses a general product spreadsheet import instead of a till product-list import. Phase 3 no longer includes a "missing from till" report; the sales import and unmatched-lines list stay.<br>
+  Changes made while building Phase 1: accounts use owner-issued temporary passwords instead of email invitations; a supplier price list import was added; suppliers gained delivery days and lead time.</p>
 </section>
 
 <!-- 11 -->
@@ -1043,7 +1142,7 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
 </section>
 
 <footer>
-  AI Supermarket Inventory System · Detailed design approved 23 Oct 2026 · Changes are agreed with the owner before they are built.
+  AI Supermarket Inventory System · Detailed design approved 23 Oct 2026 · Updated for Phase 1, 27 Oct 2026 · Changes are agreed with the owner before they are built.
 </footer>
 
 </main>
