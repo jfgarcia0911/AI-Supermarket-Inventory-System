@@ -240,6 +240,45 @@ describe("unmatched lines", () => {
   });
 });
 
+describe("days the shop was closed", () => {
+  type Coverage = { missing_count: number; missing_days: string[] };
+
+  it("are not missing once marked, and can be unmarked", async (context) => {
+    const before = (await manager.db.rpc("sales_coverage")).data as Coverage;
+    const day = before.missing_days[0];
+    if (!day) {
+      context.skip(); // No day is missing, so there is nothing to mark.
+    }
+    const byStaff = await staff.db.rpc("set_closed_day", {
+      p_day: day,
+      p_closed: true,
+    });
+    expect(byStaff.error?.code).toBe("42501");
+
+    const marked = await manager.db.rpc("set_closed_day", {
+      p_day: day,
+      p_closed: true,
+      p_note: "Database test",
+    });
+    expect(marked.error).toBeNull();
+    const during = (await manager.db.rpc("sales_coverage")).data as Coverage;
+    expect(during.missing_count).toBe(before.missing_count - 1);
+    expect(during.missing_days).not.toContain(day);
+
+    await manager.db.rpc("set_closed_day", { p_day: day, p_closed: false });
+    const after = (await manager.db.rpc("sales_coverage")).data as Coverage;
+    expect(after.missing_count).toBe(before.missing_count);
+  });
+
+  it("cannot include a day whose sales were imported", async () => {
+    const { error } = await manager.db.rpc("set_closed_day", {
+      p_day: "2026-10-22",
+      p_closed: true,
+    });
+    expect(error?.message).toContain("so the shop was open");
+  });
+});
+
 describe("reversing an import", () => {
   it("is for owners only, and puts the stock back", async () => {
     const byManager = await manager.db.rpc("reverse_sales_import", {

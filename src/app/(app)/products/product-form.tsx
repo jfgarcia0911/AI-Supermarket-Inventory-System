@@ -37,12 +37,15 @@ export function ProductForm({
   vatRates,
   product,
   cancelHref,
+  initialBarcode,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   categories: { id: string; path: string }[];
   vatRates: { code: string; name: string; rate_pct: number }[];
   product?: ProductFormValues;
   cancelHref: string;
+  /** For a new product found by scanning an unknown barcode. */
+  initialBarcode?: string;
 }) {
   const [state, formAction] = useActionState(action, initialFormState);
   const isNew = !product;
@@ -50,7 +53,11 @@ export function ProductForm({
   // After a failed submit, show what the user typed rather than the saved values.
   const value = (key: keyof ProductFormValues | "barcode") =>
     state.values?.[key] ??
-    (product ? String(product[key as keyof ProductFormValues] ?? "") : "");
+    (product
+      ? String(product[key as keyof ProductFormValues] ?? "")
+      : key === "barcode"
+        ? (initialBarcode ?? "")
+        : "");
 
   const field = (name: string) => ({
     "data-invalid": Boolean(state.fieldErrors[name]),

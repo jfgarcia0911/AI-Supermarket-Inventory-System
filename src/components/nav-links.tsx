@@ -1,7 +1,10 @@
 "use client";
 
 import {
+  BellIcon,
   BoxesIcon,
+  ChartColumnIcon,
+  ClipboardCheckIcon,
   ClipboardMinusIcon,
   FileUpIcon,
   FolderTreeIcon,
@@ -9,6 +12,7 @@ import {
   PackageIcon,
   PackageOpenIcon,
   ReceiptIcon,
+  ScanBarcodeIcon,
   SettingsIcon,
   TruckIcon,
   UsersIcon,
@@ -21,6 +25,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -28,10 +33,14 @@ import {
 
 const ICONS = {
   dashboard: LayoutDashboardIcon,
+  scan: ScanBarcodeIcon,
   deliveries: PackageOpenIcon,
   sales: ReceiptIcon,
   stock: BoxesIcon,
+  counts: ClipboardCheckIcon,
   adjustments: ClipboardMinusIcon,
+  alerts: BellIcon,
+  reports: ChartColumnIcon,
   products: PackageIcon,
   categories: FolderTreeIcon,
   suppliers: TruckIcon,
@@ -44,6 +53,8 @@ export interface NavItem {
   href: string;
   label: string;
   icon: keyof typeof ICONS;
+  /** A number to show next to the link, such as open alerts. */
+  badge?: number;
 }
 
 export interface NavGroup {
@@ -87,6 +98,9 @@ export function NavLinks({ groups }: { groups: NavGroup[] }) {
                       <Icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
+                    {item.badge ? (
+                      <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
+                    ) : null}
                   </SidebarMenuItem>
                 );
               })}

@@ -48,17 +48,23 @@ export async function signInAll() {
 
 /** The barcode of the "Database test product". */
 export const TEST_BARCODE = withCheckDigit("509999900001");
+/** The count tests' own product, so counting it affects no other test. */
+export const COUNT_TEST_BARCODE = withCheckDigit("509999900002");
 
 /**
- * The switched-off product the stock tests use (created the first time).
+ * A switched-off product the stock tests use (created the first time).
  * It is switched on while the tests run; call the returned function to
  * switch it off again.
  */
-export async function useTestProduct(owner: SignedIn) {
+export async function useTestProduct(
+  owner: SignedIn,
+  barcodeToUse = TEST_BARCODE,
+  name = "Database test product",
+) {
   const { data: barcode } = await owner.db
     .from("product_barcodes")
     .select("product_id")
-    .eq("barcode", TEST_BARCODE)
+    .eq("barcode", barcodeToUse)
     .maybeSingle();
   let productId = barcode?.product_id;
   if (!productId) {
@@ -68,11 +74,11 @@ export async function useTestProduct(owner: SignedIn) {
       .limit(1)
       .single();
     const { data, error } = await owner.db.rpc("create_product", {
-      p_name: "Database test product",
+      p_name: name,
       p_size: "Do not sell",
       p_category_id: category!.id,
       p_vat_code: "S",
-      p_barcode: TEST_BARCODE,
+      p_barcode: barcodeToUse,
     });
     if (error) throw error;
     productId = data;

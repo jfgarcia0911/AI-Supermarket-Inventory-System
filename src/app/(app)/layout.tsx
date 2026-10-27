@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -18,9 +19,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             AI Supermarket Inventory
           </span>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 md:p-6">
+        <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 pb-24 md:p-6">
           {children}
         </main>
+        <MobileNav />
       </SidebarInset>
     </SidebarProvider>
   );

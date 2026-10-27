@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { ActionButton } from "@/components/action-button";
 import { PageHeader } from "@/components/page-header";
 import { PaginationLinks } from "@/components/pagination-links";
 import { PageSkeleton } from "@/components/skeletons";
@@ -41,6 +42,8 @@ import {
 import { paramPage } from "@/lib/search-params";
 import { createClient } from "@/lib/supabase/server";
 
+import { setClosedDay } from "./actions";
+
 export const metadata: Metadata = { title: "Sales" };
 
 const PAGE_SIZE = 50;
@@ -63,7 +66,11 @@ async function Sales({
   const canEdit = canEditCatalogue(user.role);
 
   const supabase = await createClient();
-  const [{ data: coverageData }, { data: imports, count }] = await Promise.all([
+  const [
+    { data: coverageData },
+    { data: imports, count },
+    { data: closedDays },
+  ] = await Promise.all([
     supabase.rpc("sales_coverage"),
     supabase
       .from("sales_import_overview")
@@ -74,6 +81,11 @@ async function Sales({
       .order("period_end", { ascending: false })
       .order("committed_at", { ascending: false })
       .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1),
+    supabase
+      .from("store_closed_days")
+      .select("day")
+      .order("day", { ascending: false })
+      .limit(10),
   ]);
   const coverage = coverageData as unknown as SalesCoverage | null;
 
@@ -123,6 +135,59 @@ async function Sales({
             <AlertDescription>No days are missing.</AlertDescription>
           </Alert>
         ) : null)}
+
+      {canEdit && coverage && coverage.missing_count > 0 && (
+        <div className="space-y-2 text-sm">
+          <p className="text-muted-foreground">
+            Was the shop closed on one of these days? Mark it, so it no longer
+            counts as missing.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {coverage.missing_days.slice(0, 7).map((day) => (
+              <ActionButton
+                key={day}
+                size="sm"
+                variant="outline"
+                action={setClosedDay.bind(null, day, true)}
+                confirm={{
+                  title: `Was the shop closed on ${formatDate(day)}?`,
+                  description:
+                    "No sales will be expected for that day. If sales turn up for it later, undo this first.",
+                  confirmLabel: "Shop was closed",
+                }}
+              >
+                Closed on {formatDate(day)}
+              </ActionButton>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {closedDays && closedDays.length > 0 && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          Shop closed on:
+          {closedDays.map((c) =>
+            canEdit ? (
+              <ActionButton
+                key={c.day}
+                size="xs"
+                variant="ghost"
+                action={setClosedDay.bind(null, c.day, false)}
+                confirm={{
+                  title: `Undo "closed" for ${formatDate(c.day)}?`,
+                  description:
+                    "Sales will be expected for that day again, so it shows as missing until they are imported.",
+                  confirmLabel: "Undo",
+                }}
+              >
+                {formatDate(c.day)} ✕
+              </ActionButton>
+            ) : (
+              <span key={c.day}>{formatDate(c.day)}</span>
+            ),
+          )}
+        </p>
+      )}
 
       {coverage && coverage.unmatched_lines > 0 && (
         <p className="text-sm">

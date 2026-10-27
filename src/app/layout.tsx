@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
@@ -21,6 +21,18 @@ export const metadata: Metadata = {
     template: "%s · AI Supermarket Inventory",
   },
   description: "Stock, deliveries and supplier costs for the supermarket.",
+  applicationName: "AI Supermarket Inventory",
+  appleWebApp: {
+    capable: true,
+    title: "Inventory",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#171717",
+  // Lets the bottom bar sit above the iPhone home indicator.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

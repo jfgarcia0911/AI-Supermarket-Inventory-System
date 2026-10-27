@@ -72,6 +72,106 @@ export type Database = {
         }
         Relationships: []
       }
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          details: Json
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          link: string | null
+          message: string
+          product_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          status: Database["public"]["Enums"]["alert_status"]
+          store_id: string
+          subject: string
+          type: Database["public"]["Enums"]["alert_type"]
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          details?: Json
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          link?: string | null
+          message: string
+          product_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          store_id: string
+          subject?: string
+          type: Database["public"]["Enums"]["alert_type"]
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          details?: Json
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          link?: string | null
+          message?: string
+          product_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          store_id?: string
+          subject?: string
+          type?: Database["public"]["Enums"]["alert_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -844,6 +944,316 @@ export type Database = {
           },
         ]
       }
+      stock_count_lines: {
+        Row: {
+          count_id: string
+          counted_at: string
+          counted_by: string | null
+          counted_qty: number
+          id: string
+          location: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          count_id: string
+          counted_at?: string
+          counted_by?: string | null
+          counted_qty: number
+          id?: string
+          location?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          count_id?: string
+          counted_at?: string
+          counted_by?: string | null
+          counted_qty?: number
+          id?: string
+          location?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_counted_by_fkey"
+            columns: ["counted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      stock_count_recounts: {
+        Row: {
+          count_id: string
+          product_id: string
+          requested_at: string
+          requested_by: string | null
+        }
+        Insert: {
+          count_id: string
+          product_id: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Update: {
+          count_id?: string
+          product_id?: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_recounts_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_recounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_recounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_recounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "stock_count_recounts_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_results: {
+        Row: {
+          count_id: string
+          counted_total: number
+          created_at: string
+          expected_qty: number
+          id: string
+          movement_id: string | null
+          product_id: string
+          variance_qty: number
+          was_counted: boolean
+        }
+        Insert: {
+          count_id: string
+          counted_total: number
+          created_at?: string
+          expected_qty: number
+          id?: string
+          movement_id?: string | null
+          product_id: string
+          variance_qty: number
+          was_counted?: boolean
+        }
+        Update: {
+          count_id?: string
+          counted_total?: number
+          created_at?: string
+          expected_qty?: number
+          id?: string
+          movement_id?: string | null
+          product_id?: string
+          variance_qty?: number
+          was_counted?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_results_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_results_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_results_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_results_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_results_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      stock_counts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          as_of: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          scope: Database["public"]["Enums"]["count_scope"]
+          status: Database["public"]["Enums"]["count_status"]
+          store_id: string
+          submitted_at: string | null
+          submitted_by: string | null
+          uncounted_policy:
+            | Database["public"]["Enums"]["uncounted_policy"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          as_of: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          scope: Database["public"]["Enums"]["count_scope"]
+          status?: Database["public"]["Enums"]["count_status"]
+          store_id: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          uncounted_policy?:
+            | Database["public"]["Enums"]["uncounted_policy"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          as_of?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          scope?: Database["public"]["Enums"]["count_scope"]
+          status?: Database["public"]["Enums"]["count_status"]
+          store_id?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          uncounted_policy?:
+            | Database["public"]["Enums"]["uncounted_policy"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_levels: {
         Row: {
           last_counted_at: string | null
@@ -1011,6 +1421,48 @@ export type Database = {
           },
           {
             foreignKeyName: "stock_movements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_closed_days: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day: string
+          id: string
+          note: string | null
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day: string
+          id?: string
+          note?: string | null
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day?: string
+          id?: string
+          note?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_closed_days_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_closed_days_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -1947,6 +2399,16 @@ export type Database = {
       }
     }
     Functions: {
+      acknowledge_alert: { Args: { p_alert_id: string }; Returns: undefined }
+      add_count_line: {
+        Args: {
+          p_count_id: string
+          p_counted_qty: number
+          p_location?: string
+          p_product_id: string
+        }
+        Returns: string
+      }
       add_delivery_charge: {
         Args: {
           p_description: string
@@ -1975,7 +2437,43 @@ export type Database = {
         }
         Returns: string
       }
+      approve_count: {
+        Args: {
+          p_count_id: string
+          p_uncounted_policy?: Database["public"]["Enums"]["uncounted_policy"]
+        }
+        Returns: Json
+      }
+      cancel_count: { Args: { p_count_id: string }; Returns: undefined }
       check_in_delivery: { Args: { p_invoice_id: string }; Returns: undefined }
+      count_readiness: { Args: { p_count_id: string }; Returns: Json }
+      count_review: {
+        Args: { p_count_id: string }
+        Returns: {
+          counted_total: number
+          expected_qty: number
+          flagged: boolean
+          last_counted_at: string
+          line_count: number
+          product_id: string
+          product_name: string
+          product_size: string
+          recount_requested: boolean
+          sold_by: Database["public"]["Enums"]["sold_by"]
+          unit_cost: number
+          variance_qty: number
+        }[]
+      }
+      create_count: {
+        Args: {
+          p_as_of: string
+          p_category_id?: string
+          p_name: string
+          p_notes?: string
+          p_scope: Database["public"]["Enums"]["count_scope"]
+        }
+        Returns: string
+      }
       create_delivery: {
         Args: {
           p_delivered_at: string
@@ -2089,7 +2587,97 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      refresh_alerts: { Args: never; Returns: Json }
+      remove_count_line: { Args: { p_line_id: string }; Returns: undefined }
       remove_delivery_line: { Args: { p_line_id: string }; Returns: undefined }
+      report_adjustments_by_reason: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          adjustments: number
+          reason: string
+          units_in: number
+          units_out: number
+          value: number
+          waiting: number
+        }[]
+      }
+      report_counts: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          as_of: string
+          count_id: string
+          name: string
+          products: number
+          scope: Database["public"]["Enums"]["count_scope"]
+          units_added: number
+          units_removed: number
+          value: number
+          with_difference: number
+        }[]
+      }
+      report_deliveries_by_supplier: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          deliveries: number
+          lines: number
+          net_total: number
+          problem_lines: number
+          returns: number
+          supplier: string
+          units_received: number
+        }[]
+      }
+      report_movement_products: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          adjusted: number
+          closing: number
+          counted: number
+          department: string
+          opening: number
+          product_name: string
+          product_size: string
+          received: number
+          reversed: number
+          sold: number
+          sold_by: Database["public"]["Enums"]["sold_by"]
+        }[]
+      }
+      report_movement_totals: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          lines: number
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          quantity: number
+          value: number
+        }[]
+      }
+      report_stock_by_department: {
+        Args: never
+        Returns: {
+          department: string
+          products: number
+          units: number
+          value: number
+        }[]
+      }
+      report_stock_products: {
+        Args: never
+        Returns: {
+          average_unit_cost: number
+          barcode: string
+          category: string
+          department: string
+          last_counted_at: string
+          on_hand: number
+          product_name: string
+          product_size: string
+          reorder_point: number
+          sold_by: Database["public"]["Enums"]["sold_by"]
+          value: number
+        }[]
+      }
+      report_unknown_barcode: { Args: { p_code: string }; Returns: undefined }
       request_adjustment: {
         Args: {
           p_note?: string
@@ -2099,6 +2687,11 @@ export type Database = {
         }
         Returns: Json
       }
+      request_recounts: {
+        Args: { p_count_id: string; p_product_ids: string[] }
+        Returns: number
+      }
+      resolve_alert: { Args: { p_alert_id: string }; Returns: undefined }
       reverse_sales_import: {
         Args: { p_import_id: string; p_reason: string }
         Returns: number
@@ -2128,6 +2721,10 @@ export type Database = {
         }
         Returns: string
       }
+      set_closed_day: {
+        Args: { p_closed: boolean; p_day: string; p_note?: string }
+        Returns: undefined
+      }
       set_primary_barcode: {
         Args: { p_barcode_id: string }
         Returns: undefined
@@ -2153,6 +2750,11 @@ export type Database = {
         }[]
       }
       stock_summary: { Args: never; Returns: Json }
+      submit_count: { Args: { p_count_id: string }; Returns: undefined }
+      update_count_line: {
+        Args: { p_counted_qty: number; p_line_id: string; p_location: string }
+        Returns: undefined
+      }
       update_delivery_details: {
         Args: { p_delivered_at: string; p_invoice_id: string; p_notes: string }
         Returns: undefined
@@ -2176,8 +2778,22 @@ export type Database = {
     }
     Enums: {
       adjustment_status: "auto_approved" | "pending" | "approved" | "rejected"
+      alert_severity: "info" | "warning" | "critical"
+      alert_status: "open" | "acknowledged" | "resolved"
+      alert_type:
+        | "low_stock"
+        | "negative_stock"
+        | "unmatched_sales"
+        | "sales_import_missing"
+        | "unposted_delivery"
+        | "count_needs_recount"
+        | "pending_approval"
+        | "ledger_mismatch"
+        | "unknown_barcode"
       app_role: "owner" | "manager" | "staff" | "viewer"
       cost_source: "invoice" | "import" | "manual"
+      count_scope: "full" | "category" | "spot" | "opening"
+      count_status: "in_progress" | "submitted" | "approved" | "cancelled"
       delivery_source: "manual" | "upload" | "email"
       delivery_status: "draft" | "checked_in" | "posted" | "void"
       discrepancy: "none" | "short" | "damaged" | "substituted" | "extra"
@@ -2204,6 +2820,7 @@ export type Database = {
       price_source: "manual" | "spreadsheet"
       sales_line_status: "matched" | "unmatched" | "ignored"
       sold_by: "each" | "kg"
+      uncounted_policy: "leave_unchanged" | "set_to_zero"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2335,8 +2952,23 @@ export const Constants = {
   public: {
     Enums: {
       adjustment_status: ["auto_approved", "pending", "approved", "rejected"],
+      alert_severity: ["info", "warning", "critical"],
+      alert_status: ["open", "acknowledged", "resolved"],
+      alert_type: [
+        "low_stock",
+        "negative_stock",
+        "unmatched_sales",
+        "sales_import_missing",
+        "unposted_delivery",
+        "count_needs_recount",
+        "pending_approval",
+        "ledger_mismatch",
+        "unknown_barcode",
+      ],
       app_role: ["owner", "manager", "staff", "viewer"],
       cost_source: ["invoice", "import", "manual"],
+      count_scope: ["full", "category", "spot", "opening"],
+      count_status: ["in_progress", "submitted", "approved", "cancelled"],
       delivery_source: ["manual", "upload", "email"],
       delivery_status: ["draft", "checked_in", "posted", "void"],
       discrepancy: ["none", "short", "damaged", "substituted", "extra"],
@@ -2365,6 +2997,7 @@ export const Constants = {
       price_source: ["manual", "spreadsheet"],
       sales_line_status: ["matched", "unmatched", "ignored"],
       sold_by: ["each", "kg"],
+      uncounted_policy: ["leave_unchanged", "set_to_zero"],
     },
   },
 } as const

@@ -34,8 +34,11 @@ section before building a feature, and keep the design and the code in step.
   early-September 2026 days, before the sample data. Sales tests reverse
   their imports in `afterAll`. If a run is interrupted, void leftover test
   deliveries and check `stock_ledger_mismatches()`.
-- Playwright: wait for `networkidle` before `setInputFiles`, or the file is
-  chosen before the page is interactive and the wizard never sees it.
+- Playwright: wait for `networkidle` before `setInputFiles` or clicking a
+  form's controls, or the action happens before the page is interactive and
+  is lost.
+- Count tests use their own "Database count test product" counted as of
+  August 2026, so their corrections never touch the other tests' product.
 
 ## Stack
 
@@ -65,6 +68,16 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   barcode (unit or case, leading zeros ignored), then till code; unknown codes
   are kept as unmatched lines and matched later with `match_sales_code`.
   Sales are dated at the store's `trading_day_end`, UK time.
+- Counts: staff add lines (`add_count_line`), a manager reviews
+  (`count_review`, `count_readiness`) and approves (`approve_count`), which
+  writes corrections dated at the count's `as_of`. Staff count blind: they
+  cannot read `count_review` or `stock_count_results`.
+- Alerts are derived, not written by features: `private.refresh_alerts`
+  works them out from the shop's state, and the dashboard and Alerts page
+  call `refresh_alerts()` when they open. A new alert type belongs there.
+- Reports are database functions (`report_*`) because of the 1,000-row API
+  limit; `/reports/export` turns them into CSV, paging through with
+  `.range()`.
 - `src/components/product-search.tsx` finds products by supplier code,
   barcode, till code or name; a single code match is chosen straight away so a
   scanner works like a keyboard.
@@ -91,6 +104,13 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   Sign-ups are blocked by `[auth] enable_signup = false`.
 - `private.audit()` names a row by `id`, `code`, `key`, `invoice_id` or
   `line_id`. A new audited table keyed by anything else fails every write.
+- Cache Components: a client component that reads `usePathname()` must be
+  inside `<Suspense>` when used in a layout (see `mobile-nav.tsx`), or the
+  build fails on dynamic routes.
+- The camera scanner loads its engine from `public/scanner/` (not a CDN). After
+  upgrading `barcode-detector`, run `npm run scanner:wasm`; a unit test fails
+  until the copy matches. `src/proxy.ts` lets the manifest and `.wasm` files
+  through without a session, or installing the app breaks.
 - An import preview must not try the real work when the file is already
   blocked: unique indexes (such as one sales file per fingerprint) raise an
   error inside the preview instead of the friendly "already imported".

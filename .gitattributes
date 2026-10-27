@@ -2,3 +2,9 @@
 
 # Sample till exports keep their Windows (CRLF) line endings.
 /sample-data/**/*.csv -text
+
+# Binary files stay exactly as they are.
+*.wasm binary
+
+# Binary files stay exactly as they are.
+*.wasm binary

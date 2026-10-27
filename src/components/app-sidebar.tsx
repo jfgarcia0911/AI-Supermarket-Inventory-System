@@ -14,27 +14,35 @@ import {
 } from "@/components/ui/sidebar";
 import { getCurrentUser } from "@/lib/auth";
 import { type AppRole, isOwner, ROLE_LABELS } from "@/lib/roles";
+import { createClient } from "@/lib/supabase/server";
 
-function navFor(role: AppRole): NavGroup[] {
+function navFor(role: AppRole, openAlerts: number): NavGroup[] {
+  const staff = role === "staff";
   const shop: NavGroup = {
     label: "Shop",
     items: [
       { href: "/", label: "Dashboard", icon: "dashboard" },
+      { href: "/scan", label: "Scan", icon: "scan" },
       { href: "/deliveries", label: "Deliveries", icon: "deliveries" },
       { href: "/stock", label: "Stock", icon: "stock" },
+      { href: "/counts", label: "Counts", icon: "counts" },
       {
         href: "/adjustments",
         label: "Waste & adjustments",
         icon: "adjustments",
       },
+      { href: "/alerts", label: "Alerts", icon: "alerts", badge: openAlerts },
       { href: "/products", label: "Products", icon: "products" },
       { href: "/categories", label: "Categories", icon: "categories" },
       { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
     ],
   };
-  if (role !== "staff") {
-    shop.items.splice(2, 0, { href: "/sales", label: "Sales", icon: "sales" });
-    shop.items.push({ href: "/imports", label: "Imports", icon: "imports" });
+  if (!staff) {
+    shop.items.splice(3, 0, { href: "/sales", label: "Sales", icon: "sales" });
+    shop.items.push(
+      { href: "/reports", label: "Reports", icon: "reports" },
+      { href: "/imports", label: "Imports", icon: "imports" },
+    );
   }
   const groups = [shop];
   if (isOwner(role)) {
@@ -94,7 +102,18 @@ function NavSkeleton() {
 
 async function RoleNav() {
   const user = await getCurrentUser();
-  return <NavLinks groups={navFor(user?.role ?? "staff")} />;
+  // Open alerts that need attention (critical or warning), as a badge.
+  let openAlerts = 0;
+  if (user) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("alerts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .in("severity", ["critical", "warning"]);
+    openAlerts = count ?? 0;
+  }
+  return <NavLinks groups={navFor(user?.role ?? "staff", openAlerts)} />;
 }
 
 async function UserFooter() {

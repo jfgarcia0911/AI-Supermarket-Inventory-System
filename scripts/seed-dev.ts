@@ -1,6 +1,7 @@
 // Fills the DEVELOPMENT database with demo accounts and the fictional sample
 // data: products, suppliers, the opening stock count, four weeks of
-// deliveries and till sales, and two deliveries still in progress. It uses
+// deliveries and till sales, two deliveries still in progress, a count
+// waiting for review and one still being counted. It uses
 // the same database functions as the app, signed in as the demo users. Safe
 // to run again: anything already there is left alone.
 //
@@ -225,6 +226,8 @@ async function main() {
   await seedSampleDeliveries(manager);
   await seedSales(owner);
   await seedDeliveries(staff, manager);
+  await seedCounts(staff, manager);
+  await owner.rpc("refresh_alerts");
 
   await Promise.all(
     [owner, staff, manager].map((client) => client.auth.signOut()),
@@ -527,6 +530,97 @@ async function seedDeliveries(staff: Client, manager: Client) {
       if (error) throw error;
     }
     console.log(`  ${demo.note}: ${items.length} products`);
+  }
+}
+
+/**
+ * A finished count of Milk & Cream for the manager to review (as of the
+ * evening the sample sales end, so it can be approved), with a few small
+ * differences and one big enough to suggest a recount; and a spot check of
+ * the bakery that staff are still counting.
+ */
+async function seedCounts(staff: Client, manager: Client) {
+  const { data: existing } = await manager
+    .from("stock_counts")
+    .select("name")
+    .in("name", ["Demo: Milk & Cream count", "Demo: bakery spot check"])
+    .neq("status", "cancelled");
+  const done = new Set(existing?.map((c) => c.name));
+
+  const productsIn = async (category: string) => {
+    const { data: cat } = await manager
+      .from("categories")
+      .select("id")
+      .eq("name", category)
+      .single();
+    const { data: products } = await manager
+      .from("products")
+      .select("id, name, stock:stock_levels(quantity_on_hand)")
+      .eq("category_id", cat!.id)
+      .eq("active", true)
+      .order("name");
+    return { categoryId: cat!.id, products: products ?? [] };
+  };
+
+  if (!done.has("Demo: Milk & Cream count")) {
+    const { categoryId, products } = await productsIn("Milk & Cream");
+    const { data: countId, error } = await manager.rpc("create_count", {
+      p_name: "Demo: Milk & Cream count",
+      p_scope: "category",
+      p_category_id: categoryId,
+      // 22:30 UK time on 22 Oct 2026, after the last sample day's trading.
+      p_as_of: "2026-10-22T21:30:00Z",
+    });
+    if (error) throw error;
+    // Mostly right, a few off by one or two, one off by a lot.
+    const differences = [0, -2, 0, 1, 0, -1, 24, 0];
+    for (const [index, product] of products.entries()) {
+      const onHand = Number(product.stock[0]?.quantity_on_hand ?? 0);
+      const counted = Math.max(
+        0,
+        onHand + differences[index % differences.length],
+      );
+      const shelf = Math.ceil(counted / 2);
+      for (const [location, quantity] of [
+        ["Chiller", shelf],
+        ["Stockroom", counted - shelf],
+      ] as const) {
+        const { error: lineError } = await staff.rpc("add_count_line", {
+          p_count_id: countId,
+          p_product_id: product.id,
+          p_counted_qty: quantity,
+          p_location: location,
+        });
+        if (lineError) throw lineError;
+      }
+    }
+    const { error: submitError } = await staff.rpc("submit_count", {
+      p_count_id: countId,
+    });
+    if (submitError) throw submitError;
+    console.log(
+      `  Demo: Milk & Cream count: ${products.length} products, waiting for review`,
+    );
+  }
+
+  if (!done.has("Demo: bakery spot check")) {
+    const { products } = await productsIn("Bread & Rolls");
+    const { data: countId, error } = await manager.rpc("create_count", {
+      p_name: "Demo: bakery spot check",
+      p_scope: "spot",
+      p_as_of: new Date().toISOString(),
+    });
+    if (error) throw error;
+    for (const product of products.slice(0, 3)) {
+      const { error: lineError } = await staff.rpc("add_count_line", {
+        p_count_id: countId,
+        p_product_id: product.id,
+        p_counted_qty: Number(product.stock[0]?.quantity_on_hand ?? 0),
+        p_location: "Shelf",
+      });
+      if (lineError) throw lineError;
+    }
+    console.log("  Demo: bakery spot check: 3 products counted so far");
   }
 }
 

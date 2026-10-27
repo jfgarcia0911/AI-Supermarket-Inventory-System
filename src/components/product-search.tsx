@@ -1,9 +1,10 @@
 "use client";
 
-import { ScanBarcodeIcon, SearchIcon } from "lucide-react";
+import { CameraIcon, ScanBarcodeIcon, SearchIcon } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { type ProductMatch, searchProducts } from "@/app/(app)/products/search";
+import { CameraScanner } from "@/components/camera-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -20,15 +21,19 @@ const MATCHED_BY: Record<ProductMatch["matchedBy"], string> = {
 /**
  * Find a product by scanning or typing. A barcode scanner types the code and
  * presses Enter; a code that matches exactly one product is chosen straight
- * away, so scanning is one step. Names show a list to choose from.
+ * away, so scanning is one step. Names show a list to choose from. The camera
+ * button reads barcodes with the device's camera instead.
  */
 export function ProductSearch({
   onChoose,
+  onNoMatch,
   supplierId,
   disabled,
   autoFocus,
 }: {
   onChoose: (match: ProductMatch) => void;
+  /** Called with what was searched for when nothing matches. */
+  onNoMatch?: (searched: string) => void;
   supplierId?: string;
   disabled?: boolean;
   autoFocus?: boolean;
@@ -36,6 +41,7 @@ export function ProductSearch({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductMatch[] | null>(null);
   const [searched, setSearched] = useState("");
+  const [camera, setCamera] = useState(false);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,8 +52,8 @@ export function ProductSearch({
     inputRef.current?.focus();
   };
 
-  const search = () => {
-    const text = query.trim();
+  const search = (value: string = query) => {
+    const text = value.trim();
     if (!text) return;
     startTransition(async () => {
       const matches = await searchProducts(text, supplierId);
@@ -57,6 +63,7 @@ export function ProductSearch({
         return;
       }
       setResults(matches);
+      if (matches.length === 0) onNoMatch?.(text);
     });
   };
 
@@ -91,7 +98,29 @@ export function ProductSearch({
           {pending ? <Spinner /> : <SearchIcon />}
           Find
         </Button>
+        <Button
+          type="button"
+          variant={camera ? "default" : "outline"}
+          size="icon"
+          disabled={disabled}
+          onClick={() => setCamera((open) => !open)}
+          aria-label={camera ? "Close the camera" : "Scan with the camera"}
+          aria-pressed={camera}
+        >
+          <CameraIcon />
+        </Button>
       </form>
+
+      {camera && (
+        <CameraScanner
+          onClose={() => setCamera(false)}
+          onDetect={(code) => {
+            setCamera(false);
+            setQuery(code);
+            search(code);
+          }}
+        />
+      )}
 
       {results &&
         (results.length === 0 ? (

@@ -138,3 +138,31 @@ export async function reverseSalesImport(
     `Reversed: ${data} stock changes undone. These days can be imported again.`,
   );
 }
+
+/** Owners and managers: the shop was closed that day, so no sales are missing. */
+export async function setClosedDay(
+  day: string,
+  closed: boolean,
+): Promise<FormState> {
+  if (!(await actionUser("owner", "manager"))) {
+    return formFailure(NOT_ALLOWED);
+  }
+  if (!z.iso.date().safeParse(day).success) {
+    return formFailure("Choose a day.");
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_closed_day", {
+    p_day: day,
+    p_closed: closed,
+  });
+  if (error) {
+    return formFailure(friendlyDbError(error));
+  }
+  refresh();
+  revalidatePath("/counts", "layout");
+  return formSuccess(
+    closed
+      ? "Marked as closed. No sales are expected for that day."
+      : "No longer marked as closed.",
+  );
+}

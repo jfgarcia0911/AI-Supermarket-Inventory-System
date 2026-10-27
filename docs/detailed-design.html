@@ -217,7 +217,6 @@
       <tbody>
         <tr><td>Which till system, plus one real daily sales export</td><td>Before the in-store pilot</td><td>The Phase 3 importer reads any CSV or Excel layout: columns are matched by their headings and the choice is remembered. A real export is still needed to confirm codes, refunds and dates.</td></tr>
         <tr><td>In-store price labels (barcodes starting with 2, with the price or weight inside)</td><td>Before the in-store pilot</td><td>Until a real sample is seen, these lines land in the unmatched list, where they can be matched or ignored</td></tr>
-        <tr><td>Days the shop is closed</td><td>Phase 4</td><td>A closed day shows as "sales missing"; marking a day as closed comes with alerts in Phase 4</td></tr>
         <tr><td>Approximate number of products; weighed items and in-store printed barcodes</td><td>Phase 3</td><td>Phase 1 handles items and kg (weighed items use till codes); the in-store barcode rule is confirmed when a real sample is seen</td></tr>
         <tr><td>Email service for "forgot password" and alert emails</td><td>Release 2</td><td>Supabase's built-in email only reaches addresses in the Supabase organisation; owners reset passwords from Settings &gt; Users meanwhile</td></tr>
         <tr><td>Invoice volumes and formats (paper, PDF, portal); dedicated invoices@ address</td><td>Release 3</td><td>—</td></tr>
@@ -328,8 +327,8 @@
     <li><strong>Supabase CLI migrations.</strong> Database structure changes are saved as versioned files in Git, so the database can always be rebuilt exactly.</li>
     <li><strong>Supabase's own client with generated TypeScript types, not an ORM like Prisma.</strong> An ORM is a library that talks to the database for you. Prisma usually connects as a powerful user that skips the database's security rules; going through Supabase keeps those rules in force.</li>
     <li><strong>Stock changes run as functions inside the database</strong> (for example "post delivery" or "approve count"). Each runs as one transaction with its own permission checks. The app can never write to stock tables directly.</li>
-    <li><strong>PWA (Progressive Web App).</strong> Staff can install the website on a phone home screen like an app, with no app store.</li>
-    <li><strong>Barcode scanning.</strong> Bluetooth handheld scanners behave like a keyboard and are the most reliable option. Phone-camera scanning uses a JavaScript library, because built-in browser support isn't reliable on iPhones.</li>
+    <li><strong>PWA (Progressive Web App).</strong> Staff can install the website on a phone home screen like an app, with no app store. Built in Phase 4: an app manifest and icons; it works online only, as agreed.</li>
+    <li><strong>Barcode scanning.</strong> Bluetooth handheld scanners behave like a keyboard and are the most reliable option. Phone-camera scanning uses a JavaScript library, because built-in browser support isn't reliable on iPhones. Built in Phase 4 with <code>barcode-detector</code> (the zxing barcode engine), whose engine file is served from our own site, not a third-party server.</li>
     <li><strong>Resend</strong> (or similar) for alert and report emails, and <strong>scheduled jobs</strong> for nightly alerts, reports and the ledger check.</li>
     <li><strong>Vitest and Playwright</strong> for automated tests; <strong>Sentry</strong> (optional) for error monitoring.</li>
   </ul>
@@ -745,7 +744,8 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>category</td><td>→ categories</td><td>for category counts</td></tr>
       <tr><td>as_of</td><td>date-time</td><td>the moment the count represents (outside trading hours)</td></tr>
       <tr><td>status</td><td>choice</td><td>in_progress → submitted → approved | cancelled</td></tr>
-      <tr><td>uncounted_policy</td><td>choice</td><td>full counts only: set_to_zero | leave_unchanged</td></tr>
+      <tr><td>uncounted_policy</td><td>choice</td><td>full and category counts: set_to_zero | leave_unchanged, chosen when approving</td></tr>
+      <tr><td>notes</td><td>text</td><td></td></tr>
       <tr><td>submitted_by, submitted_at</td><td></td><td></td></tr>
       <tr><td>approved_by, approved_at</td><td></td><td></td></tr>
     </tbody>
@@ -771,8 +771,27 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
       <tr><td>counted_total</td><td>qty</td><td>sum of all lines for the product</td></tr>
       <tr><td>expected_qty</td><td>qty</td><td>ledger balance at the count's <code>as_of</code></td></tr>
       <tr><td>variance_qty</td><td>qty</td><td>counted − expected</td></tr>
-      <tr><td>variance_value <span class="lock">🔒</span></td><td>money</td><td></td></tr>
-      <tr><td>movement</td><td>→ stock_movements</td><td></td></tr>
+      <tr><td>was_counted</td><td>yes/no</td><td>no for products nobody counted that a full count set to zero</td></tr>
+      <tr><td>movement</td><td>→ stock_movements</td><td>the correction; its cost (<code>stock_movement_costs</code> <span class="lock">🔒</span>) gives the difference's value, so this table holds no cost</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Stock staff count "blind": they cannot read the expected figures or the results, only their own counted lines.</p>
+
+  <div class="table-title"><code>stock_count_recounts</code><span>added in Phase 4</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>count, product</td><td></td><td>products a manager asked to be counted again; their earlier lines are cleared</td></tr>
+      <tr><td>requested_by, requested_at</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-title"><code>store_closed_days</code><span>added in Phase 4</span></div>
+  <div class="table-wrap"><table class="db">
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>store, day</td><td></td><td>days the shop was closed, so no sales are expected for them</td></tr>
+      <tr><td>note</td><td>text</td><td></td></tr>
     </tbody>
   </table></div>
 
@@ -824,18 +843,20 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
   </table></div>
 
   <h3>System</h3>
-  <div class="table-title"><code>alerts</code><span>only one open alert per type + store + product</span></div>
+  <div class="table-title"><code>alerts</code><span>only one unresolved alert per type + store + subject</span></div>
   <div class="table-wrap"><table class="db">
     <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td>store, product</td><td></td><td>product optional</td></tr>
-      <tr><td>type</td><td>choice</td><td>low_stock | negative_stock | unmatched_sales | sales_import_missing | unposted_delivery | count_needs_recount | pending_approval | ledger_mismatch</td></tr>
+      <tr><td>type</td><td>choice</td><td>low_stock | negative_stock | unmatched_sales | sales_import_missing | unposted_delivery | count_needs_recount | pending_approval | ledger_mismatch | unknown_barcode</td></tr>
+      <tr><td>subject</td><td>text</td><td>what it is about: a product, a count, a barcode, or the whole shop</td></tr>
       <tr><td>severity</td><td>choice</td><td>info | warning | critical</td></tr>
-      <tr><td>status</td><td>choice</td><td>open → acknowledged → resolved</td></tr>
-      <tr><td>message, details</td><td></td><td></td></tr>
-      <tr><td>first_seen_at, last_seen_at, resolved_at, resolved_by</td><td></td><td></td></tr>
+      <tr><td>status</td><td>choice</td><td>open → acknowledged ("seen") → resolved</td></tr>
+      <tr><td>message, link, details</td><td></td><td>plain-English message and the page to fix it on</td></tr>
+      <tr><td>first_seen_at, last_seen_at, acknowledged_by/at, resolved_at, resolved_by</td><td></td><td>resolved_by is empty when the problem went away by itself</td></tr>
     </tbody>
   </table></div>
+  <p class="note"><strong>How alerts work (Phase 4).</strong> The system works the alerts out from the state of the shop whenever the dashboard or the Alerts page opens: new problems open an alert, existing ones are updated, and fixed ones close by themselves. Stock staff see the alerts about the shelves (low stock, below zero, unposted deliveries, unknown barcodes); owners, managers and viewers see all of them. A nightly check and the daily alert email come with Release 2.</p>
 
   <div class="table-title"><code>settings</code><span>owner-only; key → value</span></div>
   <div class="table-wrap"><table class="db">
@@ -843,9 +864,9 @@ Supplier email ──► invoices@ inbox ──► AI reading queue (Release 3)
     <tbody>
       <tr><td>adjustment_approval_units</td><td>20</td><td>adjustments above this need approval</td></tr>
       <tr><td>adjustment_approval_value</td><td>£25</td><td>adjustments above this need approval</td></tr>
-      <tr><td>recount_units</td><td>20</td><td>count differences above this are flagged</td></tr>
+      <tr><td>recount_units</td><td>20</td><td>count differences above this are flagged for a recount (Phase 4)</td></tr>
       <tr><td>recount_value</td><td>£25</td><td>count differences above this are flagged</td></tr>
-      <tr><td>unposted_delivery_hours</td><td>24</td><td>the dashboard flags deliveries checked in longer ago than this (alerts in Phase 4)</td></tr>
+      <tr><td>unposted_delivery_hours</td><td>24</td><td>deliveries checked in longer ago than this and not posted raise an alert</td></tr>
       <tr><td>sales_file_format</td><td>saved</td><td>the heading of each column in the till's sales export, remembered from the last import (Phase 3)</td></tr>
     </tbody>
   </table></div>
@@ -949,14 +970,25 @@ categories ─&lt; products ─&lt; product_barcodes
     </tbody>
   </table></div>
 
-  <h3>Still to come</h3>
+  <h3>Database functions built in Phase 4: counts, alerts and reports</h3>
   <div class="table-wrap"><table class="db">
     <thead><tr><th>Function</th><th>Who</th><th>What it does</th></tr></thead>
     <tbody>
-      <tr><td>approve_count</td><td>Manager+</td><td>Blocked until sales are imported up to the count's date; warns about unposted deliveries; writes corrections (or opening balances)</td></tr>
-      <tr><td>check_ledger (nightly)</td><td>System</td><td>Checks that stock levels equal the sum of all movements; raises a critical alert if not</td></tr>
+      <tr><td>create_count</td><td>Manager+</td><td>Starts a full, category, spot or opening count with its "as of" moment (up to three days ahead)</td></tr>
+      <tr><td>add_count_line, update_count_line, remove_count_line</td><td>Staff+</td><td>One line per product and place (shelf, stockroom, chiller…); only while counting is open. Category counts only take products in the category.</td></tr>
+      <tr><td>submit_count</td><td>Staff+</td><td>Finishes counting, ready for review</td></tr>
+      <tr><td>count_review, count_readiness</td><td>Manager+, viewers</td><td>Each product's counted total, the stock expected at the count's moment, the difference and whether it is over the recount limits; and what stops approval (sales missing, the moment not reached) or should be checked (unposted deliveries)</td></tr>
+      <tr><td>request_recounts</td><td>Manager+</td><td>Clears those products' lines and opens the count for counting again</td></tr>
+      <tr><td>approve_count</td><td>Manager+</td><td>Refused until every day's sales up to the count's moment are imported (closed days excepted) and the moment has passed. Writes a count correction (or an opening balance, for a product never counted) for each difference, dated at the count's moment; optionally sets uncounted products in a full or category count to zero</td></tr>
+      <tr><td>cancel_count</td><td>Manager+</td><td>Stock does not change</td></tr>
+      <tr><td>refresh_alerts</td><td>Any user</td><td>Works the alerts out again (see "How alerts work")</td></tr>
+      <tr><td>report_unknown_barcode</td><td>Staff+</td><td>Raises an "unknown barcode" alert; it closes once a product has the barcode</td></tr>
+      <tr><td>acknowledge_alert, resolve_alert</td><td>Staff+ / Manager+</td><td>Mark an alert as seen; close one by hand</td></tr>
+      <tr><td>set_closed_day</td><td>Manager+</td><td>Marks a day the shop was closed (or not), so no sales are expected for it</td></tr>
+      <tr><td>report_stock_by_department, report_stock_products, report_movement_totals, report_movement_products, report_adjustments_by_reason, report_counts, report_deliveries_by_supplier</td><td>Manager+, viewers</td><td>The basic reports, added up in the database; cost columns only for people who may see costs</td></tr>
     </tbody>
   </table></div>
+  <p class="note">The ledger check (<code>stock_ledger_mismatches</code>) runs every time alerts are worked out and raises a critical alert if any stock level differs from its movements. Running it nightly comes with the Release 2 emails.</p>
 
   <h3>Future tables (later releases)</h3>
   <ul>
@@ -974,8 +1006,8 @@ categories ─&lt; products ─&lt; product_barcodes
 
   <h3>Navigation</h3>
   <ul>
-    <li><strong>Owners and managers (desktop sidebar):</strong> Dashboard · Scan · Products · Deliveries · Stock · Suppliers · Sales imports · Alerts · Reports · Settings.</li>
-    <li><strong>Staff (phone bottom bar):</strong> Home · Scan · Deliveries · Counts · More.</li>
+    <li><strong>Owners and managers (desktop sidebar):</strong> Dashboard · Scan · Deliveries · Sales · Stock · Counts · Waste &amp; adjustments · Alerts (with the number of open warnings) · Products · Categories · Suppliers · Reports · Imports · Settings · Users. Stock staff don't see Sales, Reports, Imports or Settings.</li>
+    <li><strong>Phones (everyone):</strong> a bottom bar with Home · Scan · Deliveries · Counts · More, where More opens the full menu.</li>
     <li><strong>Viewers:</strong> read-only versions of the manager screens.</li>
   </ul>
 
@@ -1032,6 +1064,18 @@ categories ─&lt; products ─&lt; product_barcodes
     <li><strong>Unmatched sales:</strong> one card per unknown code with its lines, quantity, value and days · match it to a product (by scanning or searching), optionally remembering the code · or ignore it, optionally for good · the list of codes handled automatically, each of which can be stopped.</li>
     <li><strong>Dashboard:</strong> "Sales not imported for …" and "till lines to match" join the "Waiting for you" list; the main button is now "Import sales".</li>
     <li><strong>Stock:</strong> stock is labelled as estimated, with how far the sales go ("Sales up to 22 Oct · 4 days missing"). The movement history links each sale to its import.</li>
+  </ul>
+
+  <h3>Built in Phase 4</h3>
+  <ul>
+    <li><strong>Installable app:</strong> "Install app" (Android, desktop Chrome) or "Add to Home Screen" (iPhone) puts the shop's icon on the home screen; it opens full screen, with shortcuts to Scan, Deliveries and Counts.</li>
+    <li><strong>Scanning everywhere:</strong> every product search (Scan, deliveries, waste, counts, unmatched sales) has a camera button as well as working with handheld scanners. Scanning a case barcode in a count counts in cases.</li>
+    <li><strong>Scan:</strong> the product card from the wireframe: stock (estimated), reorder point, last counted, last change, and buttons to count it, record waste, see its history or open the product. An unknown barcode can be reported to a manager (staff), or added to an existing product or a new one (managers).</li>
+    <li><strong>Counts:</strong> list · start a count · count on the phone (place, scan, how many, Enter; lines can be corrected) · finish · review with differences only or every product, the value of each difference <span class="lock">🔒</span>, recount flags, products not counted, and what stops approval · ask for recounts · approve (with "set uncounted to zero") · cancel.</li>
+    <li><strong>Alerts:</strong> the list with severity, what it is about and where to fix it · mark as seen · close (managers) · filter by kind · many low-stock alerts shown as one line.</li>
+    <li><strong>Dashboard:</strong> the Alerts card from the wireframe · counts to review and counting in progress in "Waiting for you" · for stock staff, large buttons for Scan, Check in a delivery, Count and Record waste.</li>
+    <li><strong>Reports:</strong> stock on hand and value by department · stock movements by kind · waste and adjustments by reason · count differences · deliveries by supplier. Each downloads as a CSV file for Excel; the stock and movements downloads list every product.</li>
+    <li><strong>Sales:</strong> a missing day can be marked as a day the shop was closed (and undone).</li>
   </ul>
 
   <h3>How imports work</h3>
@@ -1168,14 +1212,14 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
   </ul>
 
   <h3>Testing</h3>
-  <h4>In place after Phase 3</h4>
+  <h4>In place after Phase 4</h4>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Tests</th><th>How many</th><th>What they prove</th><th>Where they run</th></tr></thead>
       <tbody>
-        <tr><td>Unit tests (<code>npm test</code>)</td><td>70</td><td>Barcode check digits, reading and checking spreadsheet rows (sales dates and codes included), temporary passwords, the sample data and its simulated deliveries, UK time across the clock changes, when a delivery is overdue for posting, how missing days are described</td><td>Every change, in GitHub</td></tr>
-        <tr><td>Database tests (<code>npm run test:db</code>)</td><td>48</td><td>Sign in as each demo role against the development database. Phase 1: signed-out visitors see nothing, stock staff can't see costs or change anything, viewers can read costs but not change them, only owners manage users, nobody can lock themselves out, previews save nothing. Phase 2: nobody can write to or rewrite the stock ledger directly; staff see no costs anywhere; staff can check in but not price or post; a delivery can't be posted until it adds up, or posted twice; posting adds the stock and sets the average cost; one invoice number per supplier; only owners void, and voiding takes the stock back off; the approval limits; opening-stock previews save nothing; stock levels always match the movements. Phase 3: only owners and managers import sales and staff can't read sales lines; previews save nothing; sales are dated at the end of the trading day; the same file or day can't be imported twice; future dates are refused; unmatched codes can be matched later (dated on the sale day) or ignored for good; only owners reverse, and reversing puts the stock back and frees the days. They use a switched-off test product and undo every change.</td><td>A developer's computer</td></tr>
-        <tr><td>Browser tests (<code>npm run test:e2e</code>)</td><td>32</td><td>A robot signs in and clicks through the main screens on desktop and phone sizes: sign-in, products, suppliers, categories, users, settings, import preview, a file with problems, editing a product, what stock staff can't see. Phase 2: staff check in a delivery by supplier code, a manager prices and posts it, the owner voids it; small waste goes straight through, big waste waits for approval; opening stock can't be loaded twice; stock pages hide costs from staff. Phase 3: a sales file already imported is refused in the preview; a manager imports a day's sales and the owner reverses it; the Sales pages show missing days and unmatched lines, and the match screen works; staff can't see sales.</td><td>A developer's computer</td></tr>
+        <tr><td>Unit tests (<code>npm test</code>)</td><td>76</td><td>Barcode check digits, reading and checking spreadsheet rows (sales dates and codes included), temporary passwords, the sample data and its simulated deliveries, UK time across the clock changes, when a delivery is overdue for posting, how missing days are described, writing CSV files for Excel, report date ranges, the copy of the barcode engine matching the installed library</td><td>Every change, in GitHub</td></tr>
+        <tr><td>Database tests (<code>npm run test:db</code>)</td><td>69</td><td>Sign in as each demo role against the development database. Phase 1: signed-out visitors see nothing, stock staff can't see costs or change anything, viewers can read costs but not change them, only owners manage users, nobody can lock themselves out, previews save nothing. Phase 2: nobody can write to or rewrite the stock ledger directly; staff see no costs anywhere; staff can check in but not price or post; a delivery can't be posted until it adds up, or posted twice; posting adds the stock and sets the average cost; one invoice number per supplier; only owners void, and voiding takes the stock back off; the approval limits; opening-stock previews save nothing; stock levels always match the movements. Phase 3: only owners and managers import sales and staff can't read sales lines; previews save nothing; sales are dated at the end of the trading day; the same file or day can't be imported twice; future dates are refused; unmatched codes can be matched later (dated on the sale day) or ignored for good; only owners reverse, and reversing puts the stock back and frees the days; closed days are not missing. Phase 4: who may start, count, review and approve; counting is blind for staff; a count is compared with the stock expected at its moment; recounts clear the lines; approval writes the correction dated at the count's moment and waits for the moment and for the sales; alerts (staff see only theirs, unknown barcodes, seen and closed); reports are not for staff, value the stock like the dashboard and add up. They use switched-off test products and undo every change.</td><td>A developer's computer</td></tr>
+        <tr><td>Browser tests (<code>npm run test:e2e</code>)</td><td>46</td><td>A robot signs in and clicks through the main screens on desktop and phone sizes: sign-in, products, suppliers, categories, users, settings, import preview, a file with problems, editing a product, what stock staff can't see. Phase 2: staff check in a delivery by supplier code, a manager prices and posts it, the owner voids it; small waste goes straight through, big waste waits for approval; opening stock can't be loaded twice; stock pages hide costs from staff. Phase 3: a sales file already imported is refused in the preview; a manager imports a day's sales and the owner reverses it; the Sales pages show missing days and unmatched lines, and the match screen works; staff can't see sales. Phase 4: scanning shows the product card and staff report an unknown barcode, which a manager closes; the camera explains when it cannot start; a manager starts a count, staff count on a phone without seeing expected stock, the manager reviews and cancels it; reports show and download; the app's manifest, icons and scanner load without signing in; staff get task buttons and the bottom bar on a phone.</td><td>A developer's computer</td></tr>
       </tbody>
     </table>
   </div>
@@ -1183,11 +1227,9 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
 
   <h4>Planned for later phases</h4>
   <ul>
-    <li><strong>Unit tests (Vitest):</strong> alert rules.</li>
-    <li><strong>Database tests</strong> for counts, for example "a count can't be approved before that day's sales are in".</li>
     <li><strong>Import tests</strong> using real till files, messy ones included, once a real export is available.</li>
-    <li><strong>End-to-end tests (Playwright):</strong> counts, at both phone and desktop sizes.</li>
-    <li><strong>Nightly ledger check:</strong> stock levels must equal the sum of all movements.</li>
+    <li><strong>Scanning on real phones and handheld scanners</strong> in the shop during the pilot (the test browser has no camera).</li>
+    <li><strong>Nightly ledger check:</strong> stock levels must equal the sum of all movements (with the Release 2 emails).</li>
     <li><strong>AI evaluation set</strong> (Release 3): 30–50 real invoices with the correct answers typed up, so accuracy is measured before AI is switched on.</li>
     <li><strong>Automatic checks on every code change</strong> in GitHub (lint, type check, tests, build).</li>
     <li><strong>Pilot:</strong> run the system alongside the current process for 2–4 weeks before relying on it.</li>
@@ -1206,7 +1248,7 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
         <tr><td><strong>1</strong> ✅ Done (27 Oct 2026)</td><td>Foundation</td><td>Logins and roles, store, categories, products, barcodes, selling prices, suppliers, supplier codes, audit log, <strong>product spreadsheet import</strong> (so thousands of products don't have to be typed in by hand). Also delivered: <strong>supplier price list import</strong>, dashboard (counts, missing selling prices, recent imports), product pages with barcodes, suppliers, margins and price history, categories, suppliers with cost history, import history, settings (shop, limits, VAT rates), users and the account page.</td></tr>
         <tr><td><strong>2</strong> ✅ Done (27 Oct 2026)</td><td>Stock ledger</td><td>Movement records, stock levels and costs, database functions, typed-in deliveries (check-in and posting), adjustments and approvals, movement history, opening balance. Also delivered: <strong>returns to suppliers</strong> (credit notes), photos and PDFs of the paperwork, owners voiding a delivery, the <strong>opening stock import</strong> and a per-product opening stock form, the stock list, a stock card on each product page, reason codes in Settings and a new dashboard. Costs are kept in separate tables rather than "staff views" (section 7).</td></tr>
         <tr><td><strong>3</strong> ✅ Done (28 Oct 2026)</td><td>Sales</td><td>Daily till sales import, matching, unmatched-lines list, missing-sales-file alert. <strong>Estimated stock goes live here.</strong> Also delivered: matching a code once for all its lines (and remembering it as a barcode or a rule), ignoring codes for good, owners reversing an import, remembering the till file's columns, and four weeks of simulated sample deliveries so the demo stock stays realistic. The missing-sales alert shows on the dashboard and the Sales page; the alerts list itself comes in Phase 4.</td></tr>
-        <tr><td><strong>4</strong></td><td>Mobile and counts</td><td>Installable app, scanning, counts and count review, dashboard, alerts, basic reports. <strong>MVP pilot in store.</strong></td></tr>
+        <tr><td><strong>4</strong> ✅ Built (28 Oct 2026)</td><td>Mobile and counts</td><td>Installable app, scanning, counts and count review, dashboard, alerts, basic reports. <strong>MVP pilot in store.</strong> Also delivered: camera scanning in every product search, reporting unknown barcodes, recounts, blind counting for staff, a phone bottom bar and staff task buttons, CSV downloads for every report, and marking days the shop was closed. Still to do for the pilot: the live database and Vercel set-up, a real till export, and trying scanning on the shop's own phones and scanners.</td></tr>
         <tr><td><strong>5</strong></td><td>Release 2</td><td>Expiry, prices and margins, slow sellers, discrepancies, email reports, reorder suggestions</td></tr>
         <tr><td><strong>6</strong></td><td>Release 3</td><td>AI invoice reading (upload first, then email)</td></tr>
         <tr><td><strong>7</strong></td><td>Release 4</td><td>AI assistant, forecasting, direct till connection, purchase orders</td></tr>
@@ -1233,7 +1275,7 @@ Row 77: quantity "abc" is not a number …                    [Skip error rows] 
 </section>
 
 <footer>
-  AI Supermarket Inventory System · Detailed design approved 23 Oct 2026 · Updated for Phases 1–3, 28 Oct 2026 · Changes are agreed with the owner before they are built.
+  AI Supermarket Inventory System · Detailed design approved 23 Oct 2026 · Updated for Phases 1–4, 28 Oct 2026 · Changes are agreed with the owner before they are built.
 </footer>
 
 </main>

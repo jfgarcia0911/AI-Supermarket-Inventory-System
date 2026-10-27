@@ -103,7 +103,10 @@ test("the Sales pages show missing days, imports and unmatched codes", async ({
   page,
 }) => {
   await signIn(page, "owner@example.com");
-  await expect(page.getByText(/Sales not imported for/)).toBeVisible();
+  // The dashboard's Alerts card warns about the missing days.
+  await expect(
+    page.getByText(/Sales for .+ ha(s|ve) not been imported/),
+  ).toBeVisible();
 
   await page.goto("/sales");
   await expect(page.getByText(/Sales missing for \d+ days?/)).toBeVisible();

@@ -9,7 +9,7 @@ The approved design, with plain-English explanations, is in
 
 ## Status
 
-Phases 1 to 3 are complete:
+Phases 1 to 4 are built, which completes the first release (the MVP):
 
 - **Phase 1:** sign-in with four roles, products, categories, barcodes,
   suppliers with their codes, case sizes and costs, spreadsheet imports, users
@@ -19,15 +19,20 @@ Phases 1 to 3 are complete:
   paperwork; returns to suppliers; waste and adjustments with manager approval
   over the limits; the opening stock count (import or per product); stock
   levels, average costs and the full movement history.
-
 - **Phase 3:** daily till sales. Each morning a manager imports yesterday's
   sales export from the till; what was sold comes off stock, dated at the end
   of that trading day. Codes no product has are kept on an "unmatched" list to
   match to a product (or ignore) later. Missing days are flagged, and an owner
   can reverse a wrong import.
 
-Next is Phase 4: the installable phone app, scanning, stock counts, alerts and
-basic reports.
+- **Phase 4:** the app installs on a phone's home screen; barcodes can be
+  scanned with a handheld scanner or the phone camera on every product search;
+  stock counts (staff count on their phones, a manager reviews the differences
+  and approves); in-app alerts; basic reports that download for Excel.
+
+Next is the in-store pilot: setting up the live database and Vercel, trying a
+real export from the shop's till, and scanning with the shop's own phones and
+scanners. Release 2 (expiry, prices and margins, emails) follows.
 
 ## What you need
 
@@ -48,7 +53,9 @@ basic reports.
 `npm run db:seed-dev -- --confirm-dev` creates one account per role and loads
 the sample products, suppliers and price lists, the opening stock count (as of
 24 Sep 2026, 22:30), four weeks of deliveries and till sales (25 Sep to
-22 Oct 2026), and two deliveries still in progress. The first run takes about
+22 Oct 2026), two deliveries still in progress, a Milk & Cream count waiting
+for a manager's review and a bakery spot check being counted. The first run
+takes about
 five minutes. All four accounts use the `DEMO_PASSWORD` from `.env.local`.
 Running it again changes nothing.
 
@@ -56,7 +63,7 @@ Running it again changes nothing.
 | --------------------- | ----------- | --------------------------------------------------- |
 | `owner@example.com`   | Owner       | Everything, including users, settings and voiding   |
 | `manager@example.com` | Manager     | Products, imports, sales, costs, posting, approvals |
-| `staff@example.com`   | Stock staff | Check in deliveries, record waste; no costs         |
+| `staff@example.com`   | Stock staff | Check in deliveries, count, record waste; no costs  |
 | `viewer@example.com`  | Viewer      | Read everything, including costs; no changes        |
 
 Real people get their accounts from an owner in **Settings > Users**: the owner
@@ -65,20 +72,22 @@ first time they sign in.
 
 ## Everyday commands
 
-| Command               | What it does                                     |
-| --------------------- | ------------------------------------------------ |
-| `npm run dev`         | Runs the app on your computer, live-updating     |
-| `npm test`            | Runs the unit tests                              |
-| `npm run lint`        | Checks the code for common mistakes              |
-| `npm run typecheck`   | Checks the TypeScript types                      |
-| `npm run format`      | Tidies the code formatting                       |
-| `npm run build`       | Builds the app the way Vercel does               |
-| `npm run sample-data` | Regenerates the `sample-data/` folder            |
-| `npm run db:push`     | Applies new database migrations to Supabase      |
-| `npm run db:types`    | Refreshes the TypeScript types from the database |
-| `npm run db:seed-dev` | Loads demo accounts and sample data (dev only)   |
-| `npm run test:db`     | Database security tests (dev database)           |
-| `npm run test:e2e`    | Browser tests (needs `npm run build` first)      |
+| Command                | What it does                                     |
+| ---------------------- | ------------------------------------------------ |
+| `npm run dev`          | Runs the app on your computer, live-updating     |
+| `npm test`             | Runs the unit tests                              |
+| `npm run lint`         | Checks the code for common mistakes              |
+| `npm run typecheck`    | Checks the TypeScript types                      |
+| `npm run format`       | Tidies the code formatting                       |
+| `npm run build`        | Builds the app the way Vercel does               |
+| `npm run sample-data`  | Regenerates the `sample-data/` folder            |
+| `npm run icons`        | Redraws the app icons in `public/icons`          |
+| `npm run scanner:wasm` | Copies the barcode engine after upgrading it     |
+| `npm run db:push`      | Applies new database migrations to Supabase      |
+| `npm run db:types`     | Refreshes the TypeScript types from the database |
+| `npm run db:seed-dev`  | Loads demo accounts and sample data (dev only)   |
+| `npm run test:db`      | Database security tests (dev database)           |
+| `npm run test:e2e`     | Browser tests (needs `npm run build` first)      |
 
 GitHub runs the lint, type, format, unit test, sample-data and build checks
 automatically on every change (`.github/workflows/ci.yml`).
@@ -146,6 +155,17 @@ Import templates for real data are at `/templates/sales-template.csv`,
 `/templates/products-template.csv`,
 `/templates/supplier-price-list-template.csv` and
 `/templates/opening-stock-template.csv` (also linked from the import page).
+
+## Using it on a phone
+
+- **Install it:** open the site in Chrome on Android and choose **Install
+  app** (or "Add to Home screen"); on an iPhone, open it in Safari, tap
+  **Share** and **Add to Home Screen**. It then opens full screen from its own
+  icon. It needs an internet connection.
+- **Scanning:** a Bluetooth handheld scanner works anywhere you can type a
+  code. The camera button next to each product search uses the phone's
+  camera; the browser asks for permission the first time. Cameras only work
+  on secure (https) sites, which Vercel is, and on `localhost`.
 
 ## Deploying (Vercel)
 
