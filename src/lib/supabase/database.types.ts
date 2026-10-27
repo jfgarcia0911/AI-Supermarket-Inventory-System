@@ -433,6 +433,182 @@ export type Database = {
           },
         ]
       }
+      sales_code_rules: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          product_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_code_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_code_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_code_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_code_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      sales_import_lines: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          gross_value: number | null
+          id: string
+          import_id: string
+          matched_at: string | null
+          matched_by: string | null
+          movement_id: string | null
+          net_value: number | null
+          note: string | null
+          product_id: string | null
+          quantity: number
+          row_number: number
+          sale_date: string
+          status: Database["public"]["Enums"]["sales_line_status"]
+          stock_quantity: number | null
+          store_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          gross_value?: number | null
+          id?: string
+          import_id: string
+          matched_at?: string | null
+          matched_by?: string | null
+          movement_id?: string | null
+          net_value?: number | null
+          note?: string | null
+          product_id?: string | null
+          quantity: number
+          row_number: number
+          sale_date: string
+          status: Database["public"]["Enums"]["sales_line_status"]
+          stock_quantity?: number | null
+          store_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          gross_value?: number | null
+          id?: string
+          import_id?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          movement_id?: string | null
+          net_value?: number | null
+          note?: string | null
+          product_id?: string | null
+          quantity?: number
+          row_number?: number
+          sale_date?: string
+          status?: Database["public"]["Enums"]["sales_line_status"]
+          stock_quantity?: number | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_import_lines_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "sales_import_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_matched_by_fkey"
+            columns: ["matched_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sales_import_lines_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sell_price_history: {
         Row: {
           created_by: string | null
@@ -1620,6 +1796,54 @@ export type Database = {
           },
         ]
       }
+      sales_import_overview: {
+        Row: {
+          committed_at: string | null
+          committed_by: string | null
+          file_name: string | null
+          gross_sales: number | null
+          id: string | null
+          ignored_count: number | null
+          line_count: number | null
+          matched_count: number | null
+          period_end: string | null
+          period_start: string | null
+          rows_error: number | null
+          status: Database["public"]["Enums"]["import_status"] | null
+          store_id: string | null
+          summary: Json | null
+          units_sold: number | null
+          unmatched_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imports_committed_by_fkey"
+            columns: ["committed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_unmatched_codes: {
+        Row: {
+          code: string | null
+          description: string | null
+          first_sale_date: string | null
+          gross_value: number | null
+          last_sale_date: string | null
+          line_count: number | null
+          quantity: number | null
+        }
+        Relationships: []
+      }
       stock_overview: {
         Row: {
           active: boolean | null
@@ -1782,6 +2006,11 @@ export type Database = {
         Returns: undefined
       }
       delivery_problems: { Args: { p_invoice_id: string }; Returns: string[] }
+      forget_sales_code_rule: { Args: { p_code: string }; Returns: undefined }
+      ignore_sales_code: {
+        Args: { p_always?: boolean; p_code: string }
+        Returns: number
+      }
       import_opening_stock: {
         Args: {
           p_as_of: string
@@ -1805,6 +2034,18 @@ export type Database = {
         }
         Returns: Json
       }
+      import_sales: {
+        Args: {
+          p_column_headers?: Json
+          p_dry_run?: boolean
+          p_file_name: string
+          p_fingerprint: string
+          p_mapping?: Json
+          p_rows: Json
+          p_rows_skipped?: number
+        }
+        Returns: Json
+      }
       import_supplier_products: {
         Args: {
           p_dry_run?: boolean
@@ -1818,6 +2059,10 @@ export type Database = {
         Returns: Json
       }
       mark_password_changed: { Args: never; Returns: undefined }
+      match_sales_code: {
+        Args: { p_code: string; p_product_id: string; p_remember?: boolean }
+        Returns: Json
+      }
       post_delivery: { Args: { p_invoice_id: string }; Returns: Json }
       record_supplier_cost: {
         Args: {
@@ -1854,6 +2099,11 @@ export type Database = {
         }
         Returns: Json
       }
+      reverse_sales_import: {
+        Args: { p_import_id: string; p_reason: string }
+        Returns: number
+      }
+      sales_coverage: { Args: never; Returns: Json }
       save_delivery_costs: {
         Args: {
           p_gross_total?: number
@@ -1952,6 +2202,7 @@ export type Database = {
         | "reversal"
       pack_type: "unit" | "case" | "outer"
       price_source: "manual" | "spreadsheet"
+      sales_line_status: "matched" | "unmatched" | "ignored"
       sold_by: "each" | "kg"
     }
     CompositeTypes: {
@@ -2112,6 +2363,7 @@ export const Constants = {
       ],
       pack_type: ["unit", "case", "outer"],
       price_source: ["manual", "spreadsheet"],
+      sales_line_status: ["matched", "unmatched", "ignored"],
       sold_by: ["each", "kg"],
     },
   },

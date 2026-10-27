@@ -8,6 +8,7 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   PackageOpenIcon,
+  ReceiptIcon,
   SettingsIcon,
   TruckIcon,
   UsersIcon,
@@ -28,6 +29,7 @@ import {
 const ICONS = {
   dashboard: LayoutDashboardIcon,
   deliveries: PackageOpenIcon,
+  sales: ReceiptIcon,
   stock: BoxesIcon,
   adjustments: ClipboardMinusIcon,
   products: PackageIcon,

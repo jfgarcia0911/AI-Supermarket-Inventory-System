@@ -4,7 +4,10 @@ import { isValidGtin } from "../../src/lib/barcodes";
 import {
   buildCatalogue,
   buildDailySales,
+  buildDeliveries,
+  buildOpeningStock,
   CARRIER_BAG_CODE,
+  deliveryWeekdays,
   PROTEIN_BAR_CODE,
 } from "./build";
 import { VAT_RATES } from "./catalogue";
@@ -81,5 +84,70 @@ describe("daily sales", () => {
   it("starts selling the new protein bar from 15 October", () => {
     const codes = buildDailySales(products, "2026-10-01").map((r) => r.code);
     expect(codes).not.toContain(PROTEIN_BAR_CODE);
+  });
+});
+
+describe("deliveries", () => {
+  const days = Array.from({ length: 28 }, (_, i) =>
+    new Date(Date.UTC(2026, 8, 25 + i)).toISOString().slice(0, 10),
+  );
+  const openingStock = buildOpeningStock(products);
+  const deliveries = buildDeliveries(
+    products,
+    supplierProducts,
+    openingStock,
+    days,
+  );
+
+  it("reads delivery days", () => {
+    expect(deliveryWeekdays("Mon-Sat")).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(deliveryWeekdays("Mon, Wed, Fri")).toEqual([1, 3, 5]);
+    expect(deliveryWeekdays("Thu")).toEqual([4]);
+    expect(deliveryWeekdays("Daily")).toHaveLength(7);
+  });
+
+  it("only comes on each supplier's delivery days, in whole cases", () => {
+    for (const delivery of deliveries) {
+      const weekday = new Date(
+        `${delivery.deliveredAt.slice(0, 10)}T12:00:00Z`,
+      ).getUTCDay();
+      expect(deliveryWeekdays(delivery.supplier.deliveryDays)).toContain(
+        weekday,
+      );
+      for (const line of delivery.lines) {
+        expect(Number.isInteger(line.cases)).toBe(true);
+        expect(line.cases).toBeGreaterThan(0);
+        expect(line.supplierProduct.preferred).toBe(true);
+      }
+    }
+  });
+
+  it("keeps the shelves stocked: almost no product runs out", () => {
+    const stock = new Map(openingStock.map((r) => [r.product, r.quantity]));
+    const byCode = new Map(products.map((p) => [p.barcode || p.tillCode, p]));
+    let productDays = 0;
+    let outOfStock = 0;
+    for (const day of days) {
+      for (const delivery of deliveries.filter((d) =>
+        d.deliveredAt.startsWith(day),
+      )) {
+        for (const { supplierProduct, cases } of delivery.lines) {
+          const { product } = supplierProduct;
+          stock.set(
+            product,
+            (stock.get(product) ?? 0) + cases * supplierProduct.unitsPerCase,
+          );
+        }
+      }
+      for (const sale of buildDailySales(products, day)) {
+        const product = byCode.get(sale.code);
+        if (product) stock.set(product, (stock.get(product) ?? 0) - sale.qty);
+      }
+      for (const quantity of stock.values()) {
+        productDays++;
+        if (quantity < 0) outOfStock++;
+      }
+    }
+    expect(outOfStock / productDays).toBeLessThan(0.01);
   });
 });

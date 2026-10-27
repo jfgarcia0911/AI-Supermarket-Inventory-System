@@ -179,3 +179,87 @@ export function parseCategoryPath(value: Cell): string | null {
   }
   return parts.join(" > ");
 }
+
+function isoDate(year: number, month: number, day: number): string | null {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * A sales date as yyyy-mm-dd. Dates are read the UK way (day/month/year);
+ * yyyy-mm-dd and Excel dates work too. Any time after the date is ignored.
+ */
+export function parseSaleDate(value: Cell): string | null {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new CellError("The date is not a real date.");
+    }
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === "number") {
+    // Excel stores dates as days since 30 Dec 1899.
+    if (value > 20000 && value < 80000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(value) * 864e5);
+      return date.toISOString().slice(0, 10);
+    }
+    throw new CellError(`Date "${value}" is not a date.`);
+  }
+  const text = cellText(value);
+  if (!text) {
+    return null;
+  }
+  const datePart = text.split(/[\sT]/)[0];
+  let iso: string | null = null;
+  let match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(datePart);
+  if (match) {
+    iso = isoDate(Number(match[1]), Number(match[2]), Number(match[3]));
+  } else {
+    match = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})$/.exec(datePart);
+    if (!match) {
+      throw new CellError(
+        `Date "${text}" is not a date. Use day/month/year, for example 22/10/2026.`,
+      );
+    }
+    const year = Number(match[3]);
+    iso = isoDate(
+      match[3].length === 2 ? 2000 + year : year,
+      Number(match[2]),
+      Number(match[1]),
+    );
+  }
+  if (!iso) {
+    throw new CellError(`Date "${text}" is not a real date.`);
+  }
+  return iso;
+}
+
+/**
+ * The code on a till line: a barcode, a till code or anything else the till
+ * uses. Kept as it is (in capitals) so unknown codes can be matched later.
+ */
+export function parseSalesCode(value: Cell): string | null {
+  const raw =
+    typeof value === "number" && Number.isInteger(value)
+      ? value.toFixed(0)
+      : cellText(value);
+  if (!raw) {
+    return null;
+  }
+  if (/^\d+(\.\d+)?e\+\d+$/i.test(raw)) {
+    throw new CellError(
+      `Item code "${raw}" was shortened by Excel. Format the column as Text and save the file again.`,
+    );
+  }
+  const code = raw.replace(/\s+/g, "").toUpperCase();
+  if (code.length > 40) {
+    throw new CellError(`Item code "${raw}" is longer than 40 characters.`);
+  }
+  return code;
+}

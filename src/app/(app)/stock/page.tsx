@@ -37,6 +37,7 @@ import {
 } from "@/lib/format";
 import { canEditCatalogue, canSeeCosts } from "@/lib/roles";
 import { paramPage, paramText, searchTerm } from "@/lib/search-params";
+import type { SalesCoverage } from "@/lib/sales";
 import type { StockSummary } from "@/lib/stock";
 import { createClient } from "@/lib/supabase/server";
 
@@ -75,11 +76,14 @@ async function Stock({
   const page = paramPage(params.page);
 
   const supabase = await createClient();
-  const [categories, { data: summaryData }] = await Promise.all([
-    getCategoryOptions(),
-    supabase.rpc("stock_summary"),
-  ]);
+  const [categories, { data: summaryData }, { data: coverageData }] =
+    await Promise.all([
+      getCategoryOptions(),
+      supabase.rpc("stock_summary"),
+      supabase.rpc("sales_coverage"),
+    ]);
   const summary = summaryData as unknown as StockSummary | null;
+  const coverage = coverageData as unknown as SalesCoverage | null;
 
   let query = supabase
     .from("stock_overview")
@@ -129,7 +133,7 @@ async function Stock({
     <>
       <PageHeader
         title="Stock"
-        description="What the system expects to be on the shelves and in the stockroom."
+        description="Estimated stock: the last count, plus deliveries, minus till sales, plus or minus adjustments."
       >
         {user.role !== "viewer" && (
           <Button variant="outline" render={<Link href="/adjustments" />}>
@@ -172,6 +176,13 @@ async function Stock({
           {showCosts && summary.stock_value != null && (
             <Badge variant="secondary">
               Stock value {formatMoney(summary.stock_value)}
+            </Badge>
+          )}
+          {coverage?.imported_through && (
+            <Badge variant={coverage.missing_count ? "destructive" : "outline"}>
+              Sales up to {formatDate(coverage.imported_through)}
+              {coverage.missing_count > 0 &&
+                ` · ${coverage.missing_count} ${coverage.missing_count === 1 ? "day" : "days"} missing`}
             </Badge>
           )}
         </div>

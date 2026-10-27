@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { autoMatchColumns, IMPORT_FIELDS, mappingProblems } from "./fields";
 import {
   buildProductRows,
+  buildSalesRows,
   buildSupplierProductRows,
   toSheetTable,
 } from "./rows";
@@ -127,5 +128,63 @@ describe("supplier price list rows", () => {
       units_per_case: 18,
       preferred: true,
     });
+  });
+});
+
+describe("sales rows", () => {
+  const table = sampleTable("sales/sales_2026-10-15.csv");
+  const mapping = autoMatchColumns(table.headers, IMPORT_FIELDS.sales);
+
+  it("matches the sample till export's columns", () => {
+    expect(mappingProblems("sales", mapping)).toEqual([]);
+    expect(mapping).toMatchObject({
+      sale_date: 0,
+      code: 1,
+      description: 2,
+      quantity: 4,
+      gross_value: 5,
+      net_value: 7,
+    });
+  });
+
+  it("builds a row for every line, refunds and unknown codes included", () => {
+    const built = buildSalesRows(table, mapping);
+    expect(built.errors).toEqual([]);
+    expect(built.rows).toHaveLength(table.rows.length);
+    expect(built.rows.every((row) => row.sale_date === "2026-10-15")).toBe(
+      true,
+    );
+    expect(built.rows.find((row) => row.code === "DEPT01")).toBeTruthy();
+    const bananas = built.rows.find((row) => row.code === "1001");
+    expect(bananas?.quantity).toBeCloseTo(24.122, 3);
+  });
+
+  it("leaves out lines with nothing sold and reports bad ones", () => {
+    const bad = toSheetTable([
+      ["Date", "Item Code", "Qty Sold"],
+      ["15/10/2026", "1001", "0"],
+      ["", "1001", "2"],
+      ["15/10/2026", "", "2"],
+      ["15/10/2026", "1002", "two"],
+      ["15/10/2026", "1002", "-1"],
+    ]);
+    const built = buildSalesRows(
+      bad,
+      autoMatchColumns(bad.headers, IMPORT_FIELDS.sales),
+    );
+    expect(built.ignored).toBe(1);
+    expect(built.rows).toEqual([
+      expect.objectContaining({ row_number: 6, code: "1002", quantity: -1 }),
+    ]);
+    expect(built.errors.map((e) => e.row)).toEqual([3, 4, 5]);
+  });
+
+  it("remembers the columns chosen last time", () => {
+    const mapping = autoMatchColumns(
+      ["Trans Date", "PLU No", "Units"],
+      IMPORT_FIELDS.sales,
+      { sale_date: "Trans Date", code: "PLU No", quantity: "Units" },
+    );
+    expect(mapping).toMatchObject({ sale_date: 0, code: 1, quantity: 2 });
   });
 });

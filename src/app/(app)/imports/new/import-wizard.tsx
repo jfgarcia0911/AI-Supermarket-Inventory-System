@@ -46,15 +46,18 @@ import { readSpreadsheet } from "@/lib/imports/read-file";
 import {
   buildOpeningStockRows,
   buildProductRows,
+  buildSalesRows,
   buildSupplierProductRows,
   type OpeningStockImportRow,
   type ProductImportRow,
   type RowError,
+  type SalesImportRow,
   type SheetTable,
   type SupplierProductImportRow,
 } from "@/lib/imports/rows";
 import type { ImportRequest, ImportSummary } from "@/lib/imports/schemas";
 import { cellText } from "@/lib/imports/values";
+import { formatDate, formatQuantity } from "@/lib/format";
 import { londonLocalToDate } from "@/lib/london-time";
 
 import { commitImport, previewImport } from "../actions";
@@ -68,6 +71,8 @@ interface LoadedFile {
 }
 
 const KIND_DESCRIPTIONS: Record<ImportKind, string> = {
+  sales:
+    "The till's daily sales export. What was sold comes off stock, dated at the end of each trading day.",
   products:
     "Add new products and update existing ones (matched by barcode or till code).",
   supplier_products:
@@ -77,13 +82,19 @@ const KIND_DESCRIPTIONS: Record<ImportKind, string> = {
 };
 
 const TEMPLATES: Record<ImportKind, string> = {
+  sales: "/templates/sales-template.csv",
   products: "/templates/products-template.csv",
   supplier_products: "/templates/supplier-price-list-template.csv",
   opening_stock: "/templates/opening-stock-template.csv",
 };
 
 interface Checked {
-  rows: (ProductImportRow | SupplierProductImportRow | OpeningStockImportRow)[];
+  rows: (
+    | ProductImportRow
+    | SupplierProductImportRow
+    | OpeningStockImportRow
+    | SalesImportRow
+  )[];
   errors: RowError[];
   ignored: number;
   summary: ImportSummary;
@@ -96,12 +107,15 @@ export function ImportWizard({
   initialKind,
   initialSupplierId,
   defaultAsOf,
+  salesHeaders,
 }: {
   suppliers: { id: string; name: string }[];
   initialKind: ImportKind;
   initialSupplierId: string | null;
   /** London "YYYY-MM-DDTHH:mm" to start the stock-take time with. */
   defaultAsOf: string;
+  /** Column headings chosen for the last sales file (field -> heading). */
+  salesHeaders: Record<string, string>;
 }) {
   const [step, setStep] = useState<Step>("choose");
   const [kind, setKind] = useState<ImportKind>(initialKind);
@@ -131,6 +145,21 @@ export function ImportWizard({
     };
     if (kind === "products") {
       return { kind, ...common, rows: rows as ProductImportRow[] };
+    }
+    if (kind === "sales") {
+      const columnHeaders: Record<string, string> = {};
+      for (const field of fields) {
+        const index = mapping[field.key];
+        if (index != null && file?.table.headers[index]) {
+          columnHeaders[field.key] = file.table.headers[index];
+        }
+      }
+      return {
+        kind,
+        columnHeaders,
+        ...common,
+        rows: rows as SalesImportRow[],
+      };
     }
     if (kind === "opening_stock") {
       return {
@@ -165,7 +194,13 @@ export function ImportWizard({
           return;
         }
         setFile({ name: selected.name, fingerprint, table });
-        setMapping(autoMatchColumns(table.headers, fields));
+        setMapping(
+          autoMatchColumns(
+            table.headers,
+            fields,
+            kind === "sales" ? salesHeaders : {},
+          ),
+        );
         setStep("map");
       } catch (e) {
         setError(
@@ -181,9 +216,15 @@ export function ImportWizard({
     const built =
       kind === "products"
         ? buildProductRows(file.table, mapping)
-        : kind === "opening_stock"
-          ? buildOpeningStockRows(file.table, mapping)
-          : buildSupplierProductRows(file.table, mapping, supplier?.name ?? "");
+        : kind === "sales"
+          ? buildSalesRows(file.table, mapping)
+          : kind === "opening_stock"
+            ? buildOpeningStockRows(file.table, mapping)
+            : buildSupplierProductRows(
+                file.table,
+                mapping,
+                supplier?.name ?? "",
+              );
     if (built.rows.length === 0) {
       setChecked({
         rows: [],
@@ -256,7 +297,7 @@ export function ImportWizard({
         </CardHeader>
         <CardContent className="max-w-2xl space-y-6">
           {errorBanner}
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {(Object.keys(IMPORT_KIND_LABELS) as ImportKind[]).map((option) => (
               <label
                 key={option}
@@ -484,37 +525,49 @@ export function ImportWizard({
     const toImport = checked.rows.length - checked.summary.errors.length;
     const s = checked.summary;
     const changes =
-      kind === "products"
-        ? (s.new_products ?? 0) +
-          (s.updated_products ?? 0) +
-          (s.new_barcodes ?? 0) +
-          (s.new_categories ?? 0)
-        : kind === "opening_stock"
-          ? (s.products_set ?? 0)
-          : (s.new_links ?? 0) +
-            (s.updated_links ?? 0) +
-            (s.costs_recorded ?? 0);
+      kind === "sales"
+        ? s.blocked
+          ? 0
+          : s.valid
+        : kind === "products"
+          ? (s.new_products ?? 0) +
+            (s.updated_products ?? 0) +
+            (s.new_barcodes ?? 0) +
+            (s.new_categories ?? 0)
+          : kind === "opening_stock"
+            ? (s.products_set ?? 0)
+            : (s.new_links ?? 0) +
+              (s.updated_links ?? 0) +
+              (s.costs_recorded ?? 0);
     const stats: [string, number | undefined][] =
-      kind === "products"
+      kind === "sales"
         ? [
-            ["New products", s.new_products],
-            ["Updated", s.updated_products],
-            ["Already up to date", s.unchanged_products],
-            ["New categories", s.new_categories],
-            ["New barcodes", s.new_barcodes],
+            ["Days", s.days],
+            ["Lines matched to a product", s.matched],
+            ["Unmatched (kept to match later)", s.unmatched],
+            ["Ignored", s.ignored],
+            ["Refund lines", s.refunds],
           ]
-        : kind === "opening_stock"
+        : kind === "products"
           ? [
-              ["Products given opening stock", s.products_set],
-              ["Units and kg counted", s.units_counted],
+              ["New products", s.new_products],
+              ["Updated", s.updated_products],
+              ["Already up to date", s.unchanged_products],
+              ["New categories", s.new_categories],
+              ["New barcodes", s.new_barcodes],
             ]
-          : [
-              ["New products for this supplier", s.new_links],
-              ["Updated", s.updated_links],
-              ["Already up to date", s.unchanged_links],
-              ["Costs recorded", s.costs_recorded],
-              ["Price increases", s.price_increases],
-            ];
+          : kind === "opening_stock"
+            ? [
+                ["Products given opening stock", s.products_set],
+                ["Units and kg counted", s.units_counted],
+              ]
+            : [
+                ["New products for this supplier", s.new_links],
+                ["Updated", s.updated_links],
+                ["Already up to date", s.unchanged_links],
+                ["Costs recorded", s.costs_recorded],
+                ["Price increases", s.price_increases],
+              ];
 
     return (
       <Card>
@@ -545,7 +598,35 @@ export function ImportWizard({
             </Alert>
           )}
 
-          {toImport > 0 && changes === 0 && (
+          {kind === "sales" && s.period_start && s.period_end && (
+            <p className="text-sm">
+              Sales for{" "}
+              <strong>
+                {s.period_start === s.period_end
+                  ? formatDate(s.period_start)
+                  : `${formatDate(s.period_start)} to ${formatDate(s.period_end)}`}
+              </strong>
+              : {formatQuantity(s.units_sold ?? 0)} items and kg come off stock.
+              Each day is dated at the end of trading, UK time.
+            </p>
+          )}
+
+          {s.blocked && (
+            <Alert variant="destructive">
+              <CircleAlertIcon />
+              <AlertTitle>This file cannot be imported</AlertTitle>
+              <AlertDescription>{s.blocked}</AlertDescription>
+            </Alert>
+          )}
+
+          {kind === "sales" && !s.blocked && (s.unmatched ?? 0) > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Unmatched lines are codes no product has. They are kept, and you
+              can match them to a product afterwards on the Sales page.
+            </p>
+          )}
+
+          {toImport > 0 && changes === 0 && !s.blocked && (
             <Alert>
               <CircleCheckIcon />
               <AlertTitle>Nothing to import</AlertTitle>
@@ -557,8 +638,10 @@ export function ImportWizard({
 
           {checked.ignored > 0 && (
             <p className="text-sm text-muted-foreground">
-              {checked.ignored.toLocaleString("en-GB")} rows for other suppliers
-              were left out.
+              {checked.ignored.toLocaleString("en-GB")}{" "}
+              {kind === "sales"
+                ? "rows with nothing sold (quantity 0) were left out."
+                : "rows for other suppliers were left out."}
             </p>
           )}
 
@@ -613,9 +696,11 @@ export function ImportWizard({
               {pending && <Spinner />}
               {pending
                 ? "Importing…"
-                : toImport <= 0 || changes === 0
-                  ? "Nothing to import"
-                  : `Import ${toImport.toLocaleString("en-GB")} rows${allErrors.length ? ` and skip ${allErrors.length.toLocaleString("en-GB")}` : ""}`}
+                : s.blocked
+                  ? "Cannot import this file"
+                  : toImport <= 0 || changes === 0
+                    ? "Nothing to import"
+                    : `Import ${toImport.toLocaleString("en-GB")} rows${allErrors.length ? ` and skip ${allErrors.length.toLocaleString("en-GB")}` : ""}`}
             </Button>
           </div>
         </CardContent>
@@ -625,11 +710,13 @@ export function ImportWizard({
 
   if (step === "done" && result) {
     const summary =
-      kind === "products"
-        ? `${result.new_products ?? 0} new products, ${result.updated_products ?? 0} updated, ${result.unchanged_products ?? 0} already up to date.`
-        : kind === "opening_stock"
-          ? `${result.products_set ?? 0} products now have their opening stock.`
-          : `${result.new_links ?? 0} new, ${result.updated_links ?? 0} updated, ${result.unchanged_links ?? 0} already up to date. ${result.costs_recorded ?? 0} costs recorded, ${result.price_increases ?? 0} of them increases.`;
+      kind === "sales"
+        ? `${result.matched ?? 0} lines came off stock, ${result.unmatched ?? 0} unmatched lines were kept to match later and ${result.ignored ?? 0} were ignored.`
+        : kind === "products"
+          ? `${result.new_products ?? 0} new products, ${result.updated_products ?? 0} updated, ${result.unchanged_products ?? 0} already up to date.`
+          : kind === "opening_stock"
+            ? `${result.products_set ?? 0} products now have their opening stock.`
+            : `${result.new_links ?? 0} new, ${result.updated_links ?? 0} updated, ${result.unchanged_links ?? 0} already up to date. ${result.costs_recorded ?? 0} costs recorded, ${result.price_increases ?? 0} of them increases.`;
     return (
       <Card>
         <CardHeader>
@@ -646,7 +733,31 @@ export function ImportWizard({
             </AlertDescription>
           </Alert>
           <div className="flex flex-wrap gap-2">
-            {kind === "products" ? (
+            {kind === "sales" ? (
+              <>
+                <Button
+                  render={
+                    <Link
+                      href={
+                        result.import_id
+                          ? `/sales/${result.import_id}`
+                          : "/sales"
+                      }
+                    />
+                  }
+                >
+                  View this import
+                </Button>
+                {(result.unmatched ?? 0) > 0 && (
+                  <Button
+                    variant="outline"
+                    render={<Link href="/sales/unmatched" />}
+                  >
+                    Match unmatched lines
+                  </Button>
+                )}
+              </>
+            ) : kind === "products" ? (
               <Button render={<Link href="/products" />}>View products</Button>
             ) : kind === "opening_stock" ? (
               <Button render={<Link href="/stock" />}>View stock</Button>

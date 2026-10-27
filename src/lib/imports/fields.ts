@@ -1,7 +1,8 @@
 // What each kind of import expects, and how spreadsheet columns are matched
 // to it automatically by their header text.
 
-export type ImportKind = "products" | "supplier_products" | "opening_stock";
+export type ImportKind =
+  "sales" | "products" | "supplier_products" | "opening_stock";
 
 export interface ImportField {
   key: string;
@@ -13,12 +14,89 @@ export interface ImportField {
 }
 
 export const IMPORT_KIND_LABELS: Record<ImportKind, string> = {
+  sales: "Daily sales",
   products: "Products",
   supplier_products: "Supplier price list",
   opening_stock: "Opening stock",
 };
 
 export const IMPORT_FIELDS: Record<ImportKind, ImportField[]> = {
+  sales: [
+    {
+      key: "sale_date",
+      label: "Date",
+      required: true,
+      help: "Day/month/year, the way UK tills write it.",
+      synonyms: [
+        "date",
+        "sale date",
+        "sales date",
+        "trading date",
+        "business date",
+        "day",
+      ],
+    },
+    {
+      key: "code",
+      label: "Item code",
+      required: true,
+      help: "The barcode or till code the till sold the item on.",
+      synonyms: [
+        "item code",
+        "barcode",
+        "ean",
+        "plu",
+        "product code",
+        "sku",
+        "code",
+      ],
+    },
+    {
+      key: "description",
+      label: "Description",
+      synonyms: [
+        "description",
+        "item description",
+        "item name",
+        "product name",
+        "product",
+        "name",
+      ],
+    },
+    {
+      key: "quantity",
+      label: "Quantity sold",
+      required: true,
+      help: "Items, or kg for weighed goods. Refunds are negative.",
+      synonyms: [
+        "qty sold",
+        "quantity sold",
+        "units sold",
+        "qty",
+        "quantity",
+        "units",
+        "sold",
+      ],
+    },
+    {
+      key: "gross_value",
+      label: "Sales including VAT",
+      synonyms: [
+        "gross sales",
+        "sales inc vat",
+        "gross",
+        "total inc vat",
+        "value inc vat",
+        "sales value",
+        "total",
+      ],
+    },
+    {
+      key: "net_value",
+      label: "Sales before VAT",
+      synonyms: ["net sales", "sales ex vat", "net", "total ex vat"],
+    },
+  ],
   products: [
     {
       key: "category",
@@ -214,10 +292,13 @@ export function normaliseHeader(header: string): string {
 /**
  * Picks a column for each field whose header matches one of its synonyms.
  * Synonyms are tried in order, so "Product name" beats "Description".
+ * `remembered` (field -> header text, from the last import of this kind) is
+ * tried first.
  */
 export function autoMatchColumns(
   headers: string[],
   fields: ImportField[],
+  remembered: Record<string, string> = {},
 ): ColumnMapping {
   const normalised = headers.map(normaliseHeader);
   const used = new Set<number>();
@@ -225,7 +306,9 @@ export function autoMatchColumns(
 
   for (const field of fields) {
     mapping[field.key] = null;
-    for (const synonym of field.synonyms) {
+    const known = remembered[field.key];
+    const candidates = known ? [known, ...field.synonyms] : field.synonyms;
+    for (const synonym of candidates) {
       const wanted = normaliseHeader(synonym);
       const index = normalised.findIndex(
         (header, i) => !used.has(i) && header === wanted,

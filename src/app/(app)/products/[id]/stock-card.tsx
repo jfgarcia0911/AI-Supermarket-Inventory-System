@@ -82,7 +82,7 @@ export async function StockCard({
       <CardContent className="space-y-4">
         <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-muted-foreground">On hand</dt>
+            <dt className="text-muted-foreground">In stock (estimated)</dt>
             <dd
               className={`text-2xl font-semibold tabular-nums ${onHand < 0 ? "text-destructive" : ""}`}
             >

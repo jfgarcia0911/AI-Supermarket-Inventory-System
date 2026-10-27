@@ -41,15 +41,20 @@ async function runImport(
   const { data, error } =
     r.kind === "products"
       ? await supabase.rpc("import_products", common)
-      : r.kind === "opening_stock"
-        ? await supabase.rpc("import_opening_stock", {
+      : r.kind === "sales"
+        ? await supabase.rpc("import_sales", {
             ...common,
-            p_as_of: r.asOf,
+            p_column_headers: r.columnHeaders,
           })
-        : await supabase.rpc("import_supplier_products", {
-            ...common,
-            p_supplier_id: r.supplierId,
-          });
+        : r.kind === "opening_stock"
+          ? await supabase.rpc("import_opening_stock", {
+              ...common,
+              p_as_of: r.asOf,
+            })
+          : await supabase.rpc("import_supplier_products", {
+              ...common,
+              p_supplier_id: r.supplierId,
+            });
   if (error || !data) {
     return { ok: false, message: friendlyDbError(error) };
   }

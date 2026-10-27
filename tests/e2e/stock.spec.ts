@@ -141,6 +141,7 @@ test("small waste goes straight through; big waste waits for a manager", async (
 test("opening stock cannot be loaded twice", async ({ page }) => {
   await signIn(page, "manager@example.com");
   await page.goto("/imports/new?kind=opening_stock");
+  await page.waitForLoadState("networkidle");
   await expect(page.getByLabel("When was the stock counted?")).toBeVisible();
   await page
     .getByLabel("Spreadsheet")
@@ -177,5 +178,6 @@ test("the stock pages hide costs from stock staff", async ({ page }) => {
     0,
   );
   await page.goto("/imports/new?kind=opening_stock");
+  await page.waitForLoadState("networkidle");
   await expect(page).toHaveURL("/no-access");
 });

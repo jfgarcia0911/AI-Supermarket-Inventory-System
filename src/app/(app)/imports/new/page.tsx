@@ -30,27 +30,42 @@ async function NewImport({
   const params = await searchParams;
   const requested = paramText(params.kind) ?? "";
   const kind: ImportKind =
-    requested in IMPORT_KIND_LABELS ? (requested as ImportKind) : "products";
+    requested in IMPORT_KIND_LABELS ? (requested as ImportKind) : "sales";
   const supplier = paramText(params.supplier);
 
   const supabase = await createClient();
-  const { data: suppliers } = await supabase
-    .from("suppliers")
-    .select("id, name")
-    .eq("active", true)
-    .order("name");
+  const [{ data: suppliers }, { data: salesFormat }] = await Promise.all([
+    supabase
+      .from("suppliers")
+      .select("id, name")
+      .eq("active", true)
+      .order("name"),
+    supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "sales_file_format")
+      .maybeSingle(),
+  ]);
+  const salesHeaders = Object.fromEntries(
+    Object.entries(
+      (salesFormat?.value ?? {}) as Record<string, unknown>,
+    ).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
 
   return (
     <>
       <PageHeader
         title="Import from a spreadsheet"
-        description="Bring in your product list, a supplier's codes, case sizes and costs, or your opening stock-take."
+        description="Bring in the till's daily sales, your product list, a supplier's codes, case sizes and costs, or your opening stock-take."
       />
       <ImportWizard
         suppliers={suppliers ?? []}
         initialKind={kind}
         initialSupplierId={isUuid(supplier) ? supplier : null}
         defaultAsOf={dateToLondonLocal(new Date())}
+        salesHeaders={salesHeaders}
       />
     </>
   );

@@ -48,6 +48,19 @@ const openingStockRow = z.object({
   unit_cost: z.number().nonnegative().max(1_000_000).nullable(),
 });
 
+const salesRow = z.object({
+  row_number: z.number().int().positive(),
+  sale_date: z.iso.date(),
+  code: z.string().min(1).max(40),
+  description: z.string().max(200).nullable(),
+  quantity: z
+    .number()
+    .refine((value) => value !== 0)
+    .refine((value) => Math.abs(value) <= 100_000),
+  net_value: z.number().min(-10_000_000).max(10_000_000).nullable(),
+  gross_value: z.number().min(-10_000_000).max(10_000_000).nullable(),
+});
+
 const common = {
   fileName: z.string().min(1).max(255),
   fingerprint: z.string().regex(/^[0-9a-f]{64}$/),
@@ -56,6 +69,13 @@ const common = {
 };
 
 export const importRequestSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("sales"),
+    /** The heading of each chosen column, remembered for next time. */
+    columnHeaders: z.record(z.string(), z.string().max(200)),
+    ...common,
+    rows: z.array(salesRow).max(MAX_ROWS),
+  }),
   z.object({
     kind: z.literal("products"),
     ...common,
@@ -102,4 +122,16 @@ export interface ImportSummary {
   // Opening stock
   products_set?: number;
   units_counted?: number;
+  // Sales
+  /** Why the whole file cannot be imported, e.g. already imported. */
+  blocked?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  days?: number;
+  matched?: number;
+  unmatched?: number;
+  ignored?: number;
+  refunds?: number;
+  units_sold?: number;
+  gross_sales?: number;
 }

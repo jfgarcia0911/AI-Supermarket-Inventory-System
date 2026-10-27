@@ -33,6 +33,7 @@ function navFor(role: AppRole): NavGroup[] {
     ],
   };
   if (role !== "staff") {
+    shop.items.splice(2, 0, { href: "/sales", label: "Sales", icon: "sales" });
     shop.items.push({ href: "/imports", label: "Imports", icon: "imports" });
   }
   const groups = [shop];

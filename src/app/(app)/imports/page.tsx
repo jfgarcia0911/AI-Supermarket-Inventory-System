@@ -45,6 +45,9 @@ function describe(kind: string, summary: Partial<ImportSummary>): string {
   if (kind === "opening_stock") {
     return `${summary.products_set ?? 0} products given opening stock`;
   }
+  if (kind === "sales") {
+    return `${summary.matched ?? 0} lines matched, ${summary.unmatched ?? 0} unmatched, ${summary.ignored ?? 0} ignored`;
+  }
   return "";
 }
 

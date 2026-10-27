@@ -1,8 +1,8 @@
-// Fills the DEVELOPMENT database with demo accounts, the fictional sample data
-// and a few demo deliveries, using the same database functions as the app
-// (signed in as the demo users). Safe to run again: existing accounts are
-// kept, re-importing the same data changes nothing, and opening stock and
-// deliveries that are already there are left alone.
+// Fills the DEVELOPMENT database with demo accounts and the fictional sample
+// data: products, suppliers, the opening stock count, four weeks of
+// deliveries and till sales, and two deliveries still in progress. It uses
+// the same database functions as the app, signed in as the demo users. Safe
+// to run again: anything already there is left alone.
 //
 //   npm run db:seed-dev -- --confirm-dev
 //
@@ -10,7 +10,7 @@
 // SUPABASE_SECRET_KEY and DEMO_PASSWORD in .env.local.
 
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Papa from "papaparse";
@@ -19,9 +19,11 @@ import { autoMatchColumns, IMPORT_FIELDS } from "../src/lib/imports/fields";
 import {
   buildOpeningStockRows,
   buildProductRows,
+  buildSalesRows,
   buildSupplierProductRows,
   toSheetTable,
 } from "../src/lib/imports/rows";
+import { londonLocalToDate } from "../src/lib/london-time";
 import type { Database } from "../src/lib/supabase/database.types";
 
 const DEMO_USERS = [
@@ -35,27 +37,19 @@ const DEMO_USERS = [
 // before the sample sales start.
 const OPENING_STOCK_AS_OF = "2026-09-24T21:30:00Z";
 
-// Found again by their note, so a second run does not add them twice.
+// Deliveries still in progress, found again by their note so a second run
+// does not add them twice. The posted ones come from sample-data/deliveries.csv.
 const DEMO_DELIVERIES = [
-  {
-    note: "Demo delivery: posted",
-    supplier: "Fresh Dairy Ltd",
-    deliveredAt: "2026-09-25T05:45:00Z",
-    invoiceNumber: "FD-250925",
-    stage: "posted",
-  },
   {
     note: "Demo delivery: waiting to post",
     supplier: "Valley Foods Ltd",
     deliveredAt: "2026-10-26T06:10:00Z",
-    invoiceNumber: null,
     stage: "checked_in",
   },
   {
     note: "Demo delivery: being checked in",
     supplier: "Hearthstone Bakery Ltd",
     deliveredAt: "2026-10-27T05:50:00Z",
-    invoiceNumber: null,
     stage: "draft",
   },
 ] as const;
@@ -228,6 +222,8 @@ async function main() {
 
   const staff = await signIn("staff@example.com");
   const manager = await signIn("manager@example.com");
+  await seedSampleDeliveries(manager);
+  await seedSales(owner);
   await seedDeliveries(staff, manager);
 
   await Promise.all(
@@ -271,13 +267,210 @@ async function seedOpeningStock(owner: Client) {
   console.log("  opening stock:", data);
 }
 
-/** Staff start and check in each delivery; the manager enters costs and posts. */
-async function seedDeliveries(staff: Client, manager: Client) {
-  const { data: vatRates } = await manager
-    .from("vat_rates")
-    .select("code, rate_pct");
-  const vatRate = new Map(vatRates?.map((v) => [v.code, v.rate_pct]));
+/** Runs `task` over `items`, a few at a time. */
+async function inBatches<T>(
+  items: T[],
+  size: number,
+  task: (item: T) => Promise<void>,
+) {
+  for (let i = 0; i < items.length; i += size) {
+    await Promise.all(items.slice(i, i + size).map(task));
+  }
+}
 
+/**
+ * The four weeks of deliveries in sample-data/deliveries.csv, entered and
+ * posted by the manager exactly as in the app.
+ */
+async function seedSampleDeliveries(manager: Client) {
+  const { table } = readSample("deliveries.csv");
+  const col = (name: string) => table.headers.indexOf(name);
+  const cell = (cells: unknown[], name: string) =>
+    String(cells[col(name)] ?? "").trim();
+
+  const invoices = new Map<
+    string,
+    {
+      supplier: string;
+      deliveredAt: string;
+      invoiceNumber: string;
+      lines: { code: string; cases: number; caseCost: number; vat: string }[];
+    }
+  >();
+  for (const row of table.rows) {
+    const number = cell(row.cells, "Invoice Number");
+    const invoice = invoices.get(number) ?? {
+      supplier: cell(row.cells, "Supplier"),
+      deliveredAt: cell(row.cells, "Delivered At"),
+      invoiceNumber: number,
+      lines: [],
+    };
+    invoice.lines.push({
+      code: cell(row.cells, "Supplier Code"),
+      cases: Number(cell(row.cells, "Cases")),
+      caseCost: Number(cell(row.cells, "Case Cost Ex VAT")),
+      vat: cell(row.cells, "VAT Code"),
+    });
+    invoices.set(number, invoice);
+  }
+
+  const [
+    { data: existing },
+    { data: suppliers },
+    { data: links },
+    { data: vat },
+  ] = await Promise.all([
+    manager
+      .from("supplier_invoices")
+      .select("notes")
+      .like("notes", "Sample delivery %")
+      .neq("status", "void"),
+    manager.from("suppliers").select("id, name"),
+    manager
+      .from("supplier_products")
+      .select("supplier_id, supplier_code, product_id, units_per_case")
+      .limit(5000),
+    manager.from("vat_rates").select("code, rate_pct"),
+  ]);
+  const done = new Set(existing?.map((i) => i.notes));
+  const supplierId = new Map(suppliers?.map((s) => [s.name, s.id]));
+  const link = new Map(
+    links?.map((l) => [`${l.supplier_id}:${l.supplier_code}`, l]),
+  );
+  const vatRate = new Map(vat?.map((v) => [v.code, Number(v.rate_pct)]));
+
+  const todo = [...invoices.values()].filter(
+    (invoice) => !done.has(`Sample delivery ${invoice.invoiceNumber}`),
+  );
+  if (todo.length === 0) {
+    console.log(`  sample deliveries: all ${invoices.size} already posted`);
+    return;
+  }
+  console.log(`  posting ${todo.length} sample deliveries…`);
+
+  await inBatches(todo, 6, async (invoice) => {
+    const supplier = supplierId.get(invoice.supplier);
+    const deliveredAt = londonLocalToDate(
+      invoice.deliveredAt.replace(" ", "T"),
+    );
+    if (!supplier || !deliveredAt) {
+      throw new Error(`Sample delivery ${invoice.invoiceNumber} is not valid.`);
+    }
+    const { data: invoiceId, error: createError } = await manager.rpc(
+      "create_delivery",
+      {
+        p_supplier_id: supplier,
+        p_delivered_at: deliveredAt.toISOString(),
+        p_notes: `Sample delivery ${invoice.invoiceNumber}`,
+      },
+    );
+    if (createError) throw createError;
+
+    let netPence = 0;
+    let vatPence = 0;
+    const costs: {
+      line_id: string;
+      case_cost: number;
+      vat_rate_pct: number;
+    }[] = [];
+    for (const line of invoice.lines) {
+      const item = link.get(`${supplier}:${line.code}`);
+      if (!item) {
+        throw new Error(
+          `${invoice.supplier} has no product code ${line.code}.`,
+        );
+      }
+      const { data: lineId, error } = await manager.rpc("add_delivery_line", {
+        p_invoice_id: invoiceId,
+        p_product_id: item.product_id,
+        p_cases: line.cases,
+        p_units_per_case: item.units_per_case,
+      });
+      if (error) throw error;
+      const rate = vatRate.get(line.vat) ?? 0;
+      const linePence = Math.round(line.caseCost * line.cases * 100);
+      netPence += linePence;
+      vatPence += Math.round((linePence * rate) / 100);
+      costs.push({
+        line_id: lineId,
+        case_cost: line.caseCost,
+        vat_rate_pct: rate,
+      });
+    }
+
+    const steps = [
+      () => manager.rpc("check_in_delivery", { p_invoice_id: invoiceId }),
+      () =>
+        manager.rpc("save_delivery_costs", {
+          p_invoice_id: invoiceId,
+          p_invoice_number: invoice.invoiceNumber,
+          p_invoice_date: invoice.deliveredAt.slice(0, 10),
+          p_net_total: netPence / 100,
+          p_vat_total: vatPence / 100,
+          p_gross_total: (netPence + vatPence) / 100,
+          p_lines: costs,
+        }),
+      () => manager.rpc("post_delivery", { p_invoice_id: invoiceId }),
+    ];
+    for (const step of steps) {
+      const { error } = await step();
+      if (error) throw error;
+    }
+  });
+  console.log(`  sample deliveries: ${todo.length} posted`);
+}
+
+/** The daily till sales files, oldest first, imported by the owner. */
+async function seedSales(owner: Client) {
+  const files = readdirSync(new URL("../sample-data/sales/", import.meta.url))
+    .filter((name) => name.endsWith(".csv"))
+    .sort();
+  const { data: imported } = await owner
+    .from("imports")
+    .select("file_fingerprint")
+    .eq("import_type", "sales")
+    .eq("status", "committed");
+  const done = new Set(imported?.map((i) => i.file_fingerprint));
+
+  let count = 0;
+  let unmatched = 0;
+  for (const name of files) {
+    const file = readSample(`sales/${name}`);
+    if (done.has(file.fingerprint)) continue;
+    const mapping = autoMatchColumns(file.table.headers, IMPORT_FIELDS.sales);
+    const built = buildSalesRows(file.table, mapping);
+    if (built.errors.length) {
+      throw new Error(
+        `${name} has problems: ${JSON.stringify(built.errors.slice(0, 3))}`,
+      );
+    }
+    const headers = Object.fromEntries(
+      Object.entries(mapping)
+        .filter((entry): entry is [string, number] => entry[1] != null)
+        .map(([field, index]) => [field, file.table.headers[index]]),
+    );
+    const { data, error } = await owner.rpc("import_sales", {
+      p_rows: built.rows,
+      p_file_name: name,
+      p_fingerprint: file.fingerprint,
+      p_mapping: mapping,
+      p_rows_skipped: 0,
+      p_column_headers: headers,
+      p_dry_run: false,
+    });
+    if (error) throw new Error(`${name}: ${error.message}`);
+    count++;
+    unmatched += Number((data as { unmatched?: number }).unmatched ?? 0);
+  }
+  console.log(
+    count
+      ? `  sales: ${count} days imported, ${unmatched} unmatched lines to match`
+      : `  sales: all ${files.length} days already imported`,
+  );
+}
+
+/** Staff start the in-progress demo deliveries; one is checked in. */
+async function seedDeliveries(staff: Client, manager: Client) {
   for (const demo of DEMO_DELIVERIES) {
     const { data: existing } = await manager
       .from("supplier_invoices")
@@ -298,9 +491,7 @@ async function seedDeliveries(staff: Client, manager: Client) {
     if (supplierError) throw supplierError;
     const { data: items, error: itemsError } = await manager
       .from("supplier_products")
-      .select(
-        "id, product_id, units_per_case, product:products!inner(vat_code, active)",
-      )
+      .select("product_id, units_per_case, product:products!inner(active)")
       .eq("supplier_id", supplier.id)
       .eq("is_preferred", true)
       .eq("active", true)
@@ -319,68 +510,23 @@ async function seedDeliveries(staff: Client, manager: Client) {
     );
     if (createError) throw createError;
 
-    const lines: { lineId: string; cases: number; itemIndex: number }[] = [];
     for (const [index, item] of items.entries()) {
-      const cases = (index % 3) + 1;
-      const { data: lineId, error } = await staff.rpc("add_delivery_line", {
+      const { error } = await staff.rpc("add_delivery_line", {
         p_invoice_id: invoiceId,
         p_product_id: item.product_id,
-        p_cases: cases,
+        p_cases: (index % 3) + 1,
         p_units_per_case: item.units_per_case,
       });
       if (error) throw error;
-      lines.push({ lineId, cases, itemIndex: index });
     }
 
-    if (demo.stage !== "draft") {
+    if (demo.stage === "checked_in") {
       const { error } = await staff.rpc("check_in_delivery", {
         p_invoice_id: invoiceId,
       });
       if (error) throw error;
     }
-
-    if (demo.stage === "posted") {
-      const { data: costs, error: costsError } = await manager
-        .from("supplier_product_latest_costs")
-        .select("supplier_product_id, case_cost")
-        .in(
-          "supplier_product_id",
-          items.map((item) => item.id),
-        );
-      if (costsError) throw costsError;
-      const caseCost = new Map(
-        costs.map((c) => [c.supplier_product_id, Number(c.case_cost)]),
-      );
-
-      // Work in pence, so the totals add up exactly like a printed invoice.
-      let netPence = 0;
-      let vatPence = 0;
-      const costLines = lines.map(({ lineId, cases, itemIndex }) => {
-        const item = items[itemIndex];
-        const cost = caseCost.get(item.id) ?? 0;
-        const rate = vatRate.get(item.product.vat_code) ?? 0;
-        const linePence = Math.round(cost * cases * 100);
-        netPence += linePence;
-        vatPence += Math.round((linePence * rate) / 100);
-        return { line_id: lineId, case_cost: cost, vat_rate_pct: rate };
-      });
-
-      const { error: saveError } = await manager.rpc("save_delivery_costs", {
-        p_invoice_id: invoiceId,
-        p_invoice_number: demo.invoiceNumber,
-        p_invoice_date: demo.deliveredAt.slice(0, 10),
-        p_net_total: netPence / 100,
-        p_vat_total: vatPence / 100,
-        p_gross_total: (netPence + vatPence) / 100,
-        p_lines: costLines,
-      });
-      if (saveError) throw saveError;
-      const { error: postError } = await manager.rpc("post_delivery", {
-        p_invoice_id: invoiceId,
-      });
-      if (postError) throw postError;
-    }
-    console.log(`  ${demo.note}: ${lines.length} products`);
+    console.log(`  ${demo.note}: ${items.length} products`);
   }
 }
 

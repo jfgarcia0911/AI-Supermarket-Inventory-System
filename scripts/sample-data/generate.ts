@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import {
   buildCatalogue,
   buildDailySales,
+  buildDeliveries,
   buildOpeningStock,
+  deliveriesCsv,
   openingStockCsv,
   productsCsv,
   salesCsv,
@@ -39,22 +41,31 @@ writeFileSync(
   supplierProductsCsv(supplierProducts),
 );
 // Counted on the evening of 24 Sep 2026, the night before the sales start.
-writeFileSync(
-  `${outDir}opening-stock.csv`,
-  openingStockCsv(buildOpeningStock(products)),
+const openingStock = buildOpeningStock(products);
+writeFileSync(`${outDir}opening-stock.csv`, openingStockCsv(openingStock));
+
+const salesDays = previousDays(LAST_SALES_DAY, SALES_DAYS);
+const deliveries = buildDeliveries(
+  products,
+  supplierProducts,
+  openingStock,
+  salesDays,
 );
+writeFileSync(`${outDir}deliveries.csv`, deliveriesCsv(deliveries));
 
 // Start from an empty folder so no stale days are left behind.
 rmSync(salesDir, { recursive: true, force: true });
 mkdirSync(salesDir, { recursive: true });
 let salesRows = 0;
-for (const day of previousDays(LAST_SALES_DAY, SALES_DAYS)) {
+for (const day of salesDays) {
   const rows = buildDailySales(products, day);
   salesRows += rows.length;
   writeFileSync(`${salesDir}sales_${day}.csv`, salesCsv(rows));
 }
 
+const deliveryLines = deliveries.reduce((n, d) => n + d.lines.length, 0);
 console.log(
-  `Wrote ${products.length} products, ${supplierProducts.length} supplier products ` +
+  `Wrote ${products.length} products, ${supplierProducts.length} supplier products, ` +
+    `${deliveries.length} deliveries (${deliveryLines} lines) ` +
     `and ${SALES_DAYS} days of sales (${salesRows} rows) to sample-data/`,
 );

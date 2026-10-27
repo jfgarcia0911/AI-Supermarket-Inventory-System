@@ -11,6 +11,8 @@ import {
   parseBoolean,
   parseCategoryPath,
   parseNumber,
+  parseSaleDate,
+  parseSalesCode,
   parseSoldBy,
   parseText,
   parseTillCode,
@@ -69,6 +71,17 @@ export type OpeningStockImportRow = {
   product_code: string;
   quantity: number;
   unit_cost: number | null;
+};
+
+export type SalesImportRow = {
+  row_number: number;
+  /** yyyy-mm-dd */
+  sale_date: string;
+  code: string;
+  description: string | null;
+  quantity: number;
+  net_value: number | null;
+  gross_value: number | null;
 };
 
 export interface BuiltRows<T> {
@@ -273,4 +286,45 @@ export function buildOpeningStockRows(
     }
   }
   return { rows, errors, ignored: 0 };
+}
+
+/** Lines with nothing sold (quantity 0) are left out and counted as ignored. */
+export function buildSalesRows(
+  table: SheetTable,
+  mapping: ColumnMapping,
+): BuiltRows<SalesImportRow> {
+  const rows: SalesImportRow[] = [];
+  const errors: RowError[] = [];
+  let ignored = 0;
+
+  for (const sheetRow of table.rows) {
+    const get = cellGetter(sheetRow, mapping);
+    try {
+      const saleDate = parseSaleDate(get("sale_date"));
+      if (!saleDate) throw new CellError("The date is missing.");
+      const code = parseSalesCode(get("code"));
+      if (!code) throw new CellError("The item code is missing.");
+      const quantity = parseNumber(get("quantity"), "The quantity sold");
+      if (quantity == null)
+        throw new CellError("The quantity sold is missing.");
+      if (quantity === 0) {
+        ignored++;
+        continue;
+      }
+
+      rows.push({
+        row_number: sheetRow.rowNumber,
+        sale_date: saleDate,
+        code,
+        description: parseText(get("description"), "The description", 200),
+        quantity: Math.round(quantity * 1000) / 1000,
+        net_value: parseNumber(get("net_value"), "Sales before VAT"),
+        gross_value: parseNumber(get("gross_value"), "Sales including VAT"),
+      });
+    } catch (error) {
+      if (!(error instanceof CellError)) throw error;
+      errors.push({ row: sheetRow.rowNumber, message: error.message });
+    }
+  }
+  return { rows, errors, ignored };
 }

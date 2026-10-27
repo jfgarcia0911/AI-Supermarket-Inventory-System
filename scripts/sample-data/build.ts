@@ -506,3 +506,152 @@ export function salesCsv(rows: SalesRow[]): string {
     ]),
   ]);
 }
+
+export interface SampleDeliveryLine {
+  supplierProduct: SampleSupplierProduct;
+  cases: number;
+}
+
+export interface SampleDelivery {
+  supplier: SupplierSeed;
+  /** UK time, "yyyy-mm-ddTHH:mm". */
+  deliveredAt: string;
+  invoiceNumber: string;
+  lines: SampleDeliveryLine[];
+}
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "Mon-Sat", "Daily" or "Mon, Wed, Fri" as weekday numbers (0 = Sunday). */
+export function deliveryWeekdays(text: string): number[] {
+  if (/daily/i.test(text)) {
+    return [0, 1, 2, 3, 4, 5, 6];
+  }
+  const days = new Set<number>();
+  for (const part of text.split(",")) {
+    const [from, to] = part
+      .split("-")
+      .map((name) => DAY_NAMES.indexOf(name.trim().slice(0, 3)));
+    if (from === -1) continue;
+    if (to === undefined || to === -1) {
+      days.add(from);
+      continue;
+    }
+    for (let day = from; ; day = (day + 1) % 7) {
+      days.add(day);
+      if (day === to) break;
+    }
+  }
+  return [...days].sort((a, b) => a - b);
+}
+
+/** Days from one delivery day to the supplier's next one (1 to 7). */
+function daysToNextDelivery(weekday: number, weekdays: number[]): number {
+  for (let gap = 1; gap <= 7; gap++) {
+    if (weekdays.includes((weekday + gap) % 7)) {
+      return gap;
+    }
+  }
+  return 7;
+}
+
+const DELIVERY_TIMES: Record<SupplierKey, string> = {
+  dairy: "05:40",
+  produce: "06:10",
+  bakery: "06:30",
+  meat: "07:15",
+  wholesale: "08:20",
+  drinks: "09:45",
+};
+
+/**
+ * Deliveries over the sales period, simulated from the opening stock and the
+ * daily sales. On each of a supplier's delivery days, every product that
+ * would run low before the next delivery is topped up in whole cases, to
+ * cover the days until then plus two days of safety stock.
+ */
+export function buildDeliveries(
+  products: SampleProduct[],
+  supplierProducts: SampleSupplierProduct[],
+  openingStock: OpeningStockRow[],
+  days: string[],
+): SampleDelivery[] {
+  const stock = new Map<SampleProduct, number>(
+    openingStock.map((row) => [row.product, row.quantity]),
+  );
+  const byCode = new Map(products.map((p) => [p.barcode || p.tillCode, p]));
+  const deliveries: SampleDelivery[] = [];
+
+  for (const day of days) {
+    const weekday = new Date(`${day}T12:00:00Z`).getUTCDay();
+    for (const supplier of suppliers) {
+      const weekdays = deliveryWeekdays(supplier.deliveryDays);
+      if (!weekdays.includes(weekday)) continue;
+      const cover = daysToNextDelivery(weekday, weekdays) + 2;
+
+      const lines: SampleDeliveryLine[] = [];
+      for (const row of supplierProducts) {
+        const { product } = row;
+        if (
+          row.supplier.key !== supplier.key ||
+          !row.preferred ||
+          product.averageDailySales === 0
+        ) {
+          continue;
+        }
+        const onHand = stock.get(product) ?? 0;
+        const short = product.averageDailySales * cover - onHand;
+        if (short > 0) {
+          const cases = Math.ceil(short / row.unitsPerCase);
+          lines.push({ supplierProduct: row, cases });
+          stock.set(product, onHand + cases * row.unitsPerCase);
+        }
+      }
+      if (lines.length > 0) {
+        deliveries.push({
+          supplier,
+          deliveredAt: `${day}T${DELIVERY_TIMES[supplier.key]}`,
+          invoiceNumber: `${supplier.codePrefix || "CW"}-${day.slice(2).replaceAll("-", "")}`,
+          lines,
+        });
+      }
+    }
+
+    for (const sale of buildDailySales(products, day)) {
+      const product = byCode.get(sale.code);
+      if (product) {
+        stock.set(product, (stock.get(product) ?? 0) - sale.qty);
+      }
+    }
+  }
+  return deliveries;
+}
+
+export function deliveriesCsv(deliveries: SampleDelivery[]): string {
+  return toCsv([
+    [
+      "Supplier",
+      "Delivered At",
+      "Invoice Number",
+      "Supplier Code",
+      "Description",
+      "Cases",
+      "Units Per Case",
+      "Case Cost Ex VAT",
+      "VAT Code",
+    ],
+    ...deliveries.flatMap((delivery) =>
+      delivery.lines.map(({ supplierProduct, cases }) => [
+        delivery.supplier.name,
+        delivery.deliveredAt.replace("T", " "),
+        delivery.invoiceNumber,
+        supplierProduct.supplierCode,
+        supplierProduct.description,
+        cases,
+        supplierProduct.unitsPerCase,
+        money(supplierProduct.caseCostExVat),
+        supplierProduct.product.vatCode,
+      ]),
+    ),
+  ]);
+}

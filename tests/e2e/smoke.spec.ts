@@ -74,6 +74,7 @@ test("the owner can browse products, costs and users", async ({ page }) => {
 test("previewing an import saves nothing", async ({ page }) => {
   await signIn(page, "owner@example.com");
   await page.goto("/imports/new?kind=products");
+  await page.waitForLoadState("networkidle");
   await page
     .getByLabel("Spreadsheet")
     .setInputFiles("sample-data/products.csv");
@@ -97,6 +98,7 @@ test("a file with problems shows a clear message for each bad row", async ({
 }) => {
   await signIn(page, "manager@example.com");
   await page.goto("/imports/new?kind=products");
+  await page.waitForLoadState("networkidle");
   await page
     .getByLabel("Spreadsheet")
     .setInputFiles("tests/e2e/fixtures/products-with-problems.csv");

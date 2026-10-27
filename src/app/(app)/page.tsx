@@ -35,6 +35,7 @@ import {
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { IMPORT_KIND_LABELS, type ImportKind } from "@/lib/imports/fields";
 import { canEditCatalogue, canSeeCosts } from "@/lib/roles";
+import { describeMissingDays, type SalesCoverage } from "@/lib/sales";
 import type { StockSummary } from "@/lib/stock";
 import { createClient } from "@/lib/supabase/server";
 
@@ -82,6 +83,7 @@ async function Dashboard() {
     { data: recentDeliveries },
     pendingAdjustments,
     { data: unpostedSetting },
+    { data: coverageData },
   ] = await Promise.all([
     supabase.rpc("stock_summary"),
     supabase.from("products").select("id", count).eq("active", true),
@@ -110,6 +112,9 @@ async function Dashboard() {
       .select("value")
       .eq("key", "unposted_delivery_hours")
       .maybeSingle(),
+    user.role !== "staff"
+      ? supabase.rpc("sales_coverage")
+      : Promise.resolve({ data: null }),
   ]);
   const imports =
     user.role !== "staff"
@@ -123,6 +128,7 @@ async function Dashboard() {
       : null;
 
   const summary = summaryData as unknown as StockSummary | null;
+  const coverage = coverageData as unknown as SalesCoverage | null;
   const unpostedHours = Number(unpostedSetting?.value ?? 24);
   const drafts = (openDeliveries ?? []).filter((d) => d.status === "draft");
   const toPost = (openDeliveries ?? []).filter(
@@ -169,6 +175,19 @@ async function Dashboard() {
 
   // The jobs list: only the things that need someone to act.
   const jobs: { text: string; href: string; urgent?: boolean }[] = [];
+  if (coverage?.missing_count) {
+    jobs.push({
+      text: `Sales not imported for ${describeMissingDays(coverage.missing_days, coverage.missing_count)}`,
+      href: canEdit ? "/imports/new?kind=sales" : "/sales",
+      urgent: true,
+    });
+  }
+  if (canEdit && coverage?.unmatched_lines) {
+    jobs.push({
+      text: `${plural(coverage.unmatched_lines, "till line", "till lines")} to match to a product`,
+      href: "/sales/unmatched",
+    });
+  }
   if (toPost.length) {
     jobs.push({
       text: canEdit
@@ -224,9 +243,12 @@ async function Dashboard() {
         description="Today's stock at a glance."
       >
         {canEdit && (
-          <Button variant="outline" render={<Link href="/imports/new" />}>
+          <Button
+            variant="outline"
+            render={<Link href="/imports/new?kind=sales" />}
+          >
             <FileUpIcon />
-            Import
+            Import sales
           </Button>
         )}
         {user.role !== "viewer" && (

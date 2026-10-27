@@ -9,11 +9,13 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { withCheckDigit } from "@/lib/barcodes";
+import {
+  type SignedIn,
+  signInAll,
+  TEST_BARCODE,
+  useTestProduct,
+} from "./helpers";
 
-import { type SignedIn, signInAll } from "./helpers";
-
-const TEST_BARCODE = withCheckDigit("509999900001");
 const SUPPLIER = "Fresh Dairy Ltd";
 const CASE_COST = 4.5;
 const UNITS_PER_CASE = 6;
@@ -25,15 +27,8 @@ let viewer: SignedIn;
 let productId: string;
 let supplierId: string;
 let startingStock: number;
-
-async function onHand(): Promise<number> {
-  const { data } = await owner.db
-    .from("stock_levels")
-    .select("quantity_on_hand")
-    .eq("product_id", productId)
-    .maybeSingle();
-  return Number(data?.quantity_on_hand ?? 0);
-}
+let onHand: () => Promise<number>;
+let switchOff: () => Promise<void>;
 
 async function reasonId(name: string): Promise<string> {
   const { data, error } = await staff.db
@@ -47,31 +42,7 @@ async function reasonId(name: string): Promise<string> {
 
 beforeAll(async () => {
   ({ owner, manager, staff, viewer } = await signInAll());
-
-  const { data: barcode } = await owner.db
-    .from("product_barcodes")
-    .select("product_id")
-    .eq("barcode", TEST_BARCODE)
-    .maybeSingle();
-  if (barcode) {
-    productId = barcode.product_id;
-  } else {
-    const { data: category } = await owner.db
-      .from("categories")
-      .select("id")
-      .limit(1)
-      .single();
-    const { data, error } = await owner.db.rpc("create_product", {
-      p_name: "Database test product",
-      p_size: "Do not sell",
-      p_category_id: category!.id,
-      p_vat_code: "S",
-      p_barcode: TEST_BARCODE,
-    });
-    if (error) throw error;
-    productId = data;
-  }
-  await owner.db.from("products").update({ active: true }).eq("id", productId);
+  ({ productId, onHand, switchOff } = await useTestProduct(owner));
 
   const { data: supplier } = await owner.db
     .from("suppliers")
@@ -83,12 +54,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (productId) {
-    await owner.db
-      .from("products")
-      .update({ active: false })
-      .eq("id", productId);
-  }
+  await switchOff?.();
 });
 
 describe("the stock ledger", () => {

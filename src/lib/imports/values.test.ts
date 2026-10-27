@@ -6,6 +6,8 @@ import {
   parseBoolean,
   parseCategoryPath,
   parseNumber,
+  parseSaleDate,
+  parseSalesCode,
   parseSoldBy,
   parseTillCode,
   parseVatCode,
@@ -111,5 +113,41 @@ describe("parseCategoryPath", () => {
 
   it("rejects an empty level", () => {
     expect(() => parseCategoryPath("Dairy > > Milk")).toThrow(/empty level/);
+  });
+});
+
+describe("parseSaleDate", () => {
+  it("reads UK dates as day/month/year", () => {
+    expect(parseSaleDate("05/10/2026")).toBe("2026-10-05");
+    expect(parseSaleDate("5/10/26")).toBe("2026-10-05");
+    expect(parseSaleDate("05.10.2026")).toBe("2026-10-05");
+    expect(parseSaleDate("05-10-2026")).toBe("2026-10-05");
+  });
+
+  it("reads ISO dates, Excel dates and ignores a time of day", () => {
+    expect(parseSaleDate("2026-10-05")).toBe("2026-10-05");
+    expect(parseSaleDate("22/10/2026 22:00")).toBe("2026-10-22");
+    expect(parseSaleDate(new Date(Date.UTC(2026, 9, 22)))).toBe("2026-10-22");
+    expect(parseSaleDate(46317)).toBe("2026-10-22");
+  });
+
+  it("explains dates it cannot read", () => {
+    expect(parseSaleDate("")).toBeNull();
+    expect(() => parseSaleDate("31/02/2026")).toThrow("is not a real date");
+    expect(() => parseSaleDate("Tuesday")).toThrow(
+      "Use day/month/year, for example 22/10/2026.",
+    );
+  });
+});
+
+describe("parseSalesCode", () => {
+  it("keeps codes as they are, in capitals", () => {
+    expect(parseSalesCode(" dept01 ")).toBe("DEPT01");
+    expect(parseSalesCode("1001")).toBe("1001");
+    expect(parseSalesCode(5061311000016)).toBe("5061311000016");
+  });
+
+  it("spots barcodes Excel has shortened", () => {
+    expect(() => parseSalesCode("5.06131E+12")).toThrow(CellError);
   });
 });

@@ -92,31 +92,44 @@ async function Movements({
   const lineIds = (movements ?? []).flatMap((m) =>
     m.source_type === "delivery_line" && m.source_id ? [m.source_id] : [],
   );
+  const salesLineIds = (movements ?? []).flatMap((m) =>
+    m.source_type === "sales_line" && m.source_id ? [m.source_id] : [],
+  );
   const showCosts = canSeeCosts(user.role);
-  const [{ data: lines }, { data: costs }, { data: productRow }] =
-    await Promise.all([
-      lineIds.length
-        ? supabase
-            .from("supplier_invoice_lines")
-            .select("id, invoice_id")
-            .in("id", lineIds)
-        : Promise.resolve({ data: [] as { id: string; invoice_id: string }[] }),
-      showCosts && ids.length
-        ? supabase
-            .from("stock_movement_costs")
-            .select("movement_id, unit_cost")
-            .in("movement_id", ids)
-        : Promise.resolve({
-            data: [] as { movement_id: string; unit_cost: number }[],
-          }),
-      isUuid(product)
-        ? supabase
-            .from("products")
-            .select("name")
-            .eq("id", product)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+  const [
+    { data: lines },
+    { data: costs },
+    { data: productRow },
+    { data: salesLines },
+  ] = await Promise.all([
+    lineIds.length
+      ? supabase
+          .from("supplier_invoice_lines")
+          .select("id, invoice_id")
+          .in("id", lineIds)
+      : Promise.resolve({ data: [] as { id: string; invoice_id: string }[] }),
+    showCosts && ids.length
+      ? supabase
+          .from("stock_movement_costs")
+          .select("movement_id, unit_cost")
+          .in("movement_id", ids)
+      : Promise.resolve({
+          data: [] as { movement_id: string; unit_cost: number }[],
+        }),
+    isUuid(product)
+      ? supabase.from("products").select("name").eq("id", product).maybeSingle()
+      : Promise.resolve({ data: null }),
+    // Stock staff cannot read sales lines, so they see no link.
+    salesLineIds.length
+      ? supabase
+          .from("sales_import_lines")
+          .select("id, import_id")
+          .in("id", salesLineIds)
+      : Promise.resolve({ data: [] as { id: string; import_id: string }[] }),
+  ]);
+  const importForSalesLine = new Map(
+    (salesLines ?? []).map((l) => [l.id, l.import_id]),
+  );
   const invoiceForLine = new Map(
     (lines ?? []).map((l) => [l.id, l.invoice_id]),
   );
@@ -144,6 +157,16 @@ async function Movements({
         <Link href="/adjustments" className="hover:underline">
           Adjustment
         </Link>
+      );
+    }
+    if (m.source_type === "sales_line" && m.source_id) {
+      const importId = importForSalesLine.get(m.source_id);
+      return importId ? (
+        <Link href={`/sales/${importId}`} className="hover:underline">
+          Till sales
+        </Link>
+      ) : (
+        "Till sales"
       );
     }
     if (m.source_type === "opening_stock" && m.source_id) {

@@ -2,6 +2,7 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import { withCheckDigit } from "@/lib/barcodes";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type Client = SupabaseClient<Database>;
@@ -43,4 +44,54 @@ export async function signInAll() {
     signIn("viewer@example.com"),
   ]);
   return { owner, manager, staff, viewer };
+}
+
+/** The barcode of the "Database test product". */
+export const TEST_BARCODE = withCheckDigit("509999900001");
+
+/**
+ * The switched-off product the stock tests use (created the first time).
+ * It is switched on while the tests run; call the returned function to
+ * switch it off again.
+ */
+export async function useTestProduct(owner: SignedIn) {
+  const { data: barcode } = await owner.db
+    .from("product_barcodes")
+    .select("product_id")
+    .eq("barcode", TEST_BARCODE)
+    .maybeSingle();
+  let productId = barcode?.product_id;
+  if (!productId) {
+    const { data: category } = await owner.db
+      .from("categories")
+      .select("id")
+      .limit(1)
+      .single();
+    const { data, error } = await owner.db.rpc("create_product", {
+      p_name: "Database test product",
+      p_size: "Do not sell",
+      p_category_id: category!.id,
+      p_vat_code: "S",
+      p_barcode: TEST_BARCODE,
+    });
+    if (error) throw error;
+    productId = data;
+  }
+  await owner.db.from("products").update({ active: true }).eq("id", productId);
+
+  const onHand = async (): Promise<number> => {
+    const { data } = await owner.db
+      .from("stock_levels")
+      .select("quantity_on_hand")
+      .eq("product_id", productId)
+      .maybeSingle();
+    return Number(data?.quantity_on_hand ?? 0);
+  };
+  const switchOff = async () => {
+    await owner.db
+      .from("products")
+      .update({ active: false })
+      .eq("id", productId);
+  };
+  return { productId, onHand, switchOff };
 }

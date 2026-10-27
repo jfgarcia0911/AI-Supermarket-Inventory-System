@@ -23,14 +23,19 @@ section before building a feature, and keep the design and the code in step.
   one), then `npm run db:push` and `npm run db:types`.
 - `npm run db:seed-dev -- --confirm-dev` loads demo accounts
   (owner/manager/staff/viewer@example.com, password `DEMO_PASSWORD`), the
-  sample data, the opening stock and three demo deliveries into the
-  development database. Re-running changes nothing.
+  sample data, the opening stock, four weeks of deliveries and sales, and two
+  in-progress deliveries into the development database (about five minutes
+  the first time). Re-running changes nothing.
 - `npm run test:db` (RLS tests against the dev database) and `npm run test:e2e`
   (Playwright, after `npm run build`) need `.env.local`; they are not in CI.
-  Tests that change stock must undo it (void, or an adjustment the other way);
-  db tests use the switched-off "Database test product". If a run is
-  interrupted, void its leftover test deliveries and check
-  `stock_ledger_mismatches()`.
+  Tests that change stock must undo it (void, reverse a sales import, or an
+  adjustment the other way); they use the switched-off "Database test
+  product" (`useTestProduct` in `tests/db/helpers.ts`), and sales tests use
+  early-September 2026 days, before the sample data. Sales tests reverse
+  their imports in `afterAll`. If a run is interrupted, void leftover test
+  deliveries and check `stock_ledger_mismatches()`.
+- Playwright: wait for `networkidle` before `setInputFiles`, or the file is
+  chosen before the page is interactive and the wizard never sees it.
 
 ## Stack
 
@@ -56,6 +61,10 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   the level and the average cost). Public functions (`post_delivery`,
   `request_adjustment`, `import_opening_stock`, …) call it; nothing else
   writes the ledger tables.
+- Sales (`import_sales`) match each till line by sales-code rule, then
+  barcode (unit or case, leading zeros ignored), then till code; unknown codes
+  are kept as unmatched lines and matched later with `match_sales_code`.
+  Sales are dated at the store's `trading_day_end`, UK time.
 - `src/components/product-search.tsx` finds products by supplier code,
   barcode, till code or name; a single code match is chosen straight away so a
   scanner works like a keyboard.
@@ -82,6 +91,9 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   Sign-ups are blocked by `[auth] enable_signup = false`.
 - `private.audit()` names a row by `id`, `code`, `key`, `invoice_id` or
   `line_id`. A new audited table keyed by anything else fails every write.
+- An import preview must not try the real work when the file is already
+  blocked: unique indexes (such as one sales file per fingerprint) raise an
+  error inside the preview instead of the friendly "already imported".
 - A form that disappears after its action (posting, voiding) must show its
   toast inside the action wrapper passed to `useActionState`, not in an
   effect: the effect never runs once the form is gone.
