@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  BoxesIcon,
+  ClipboardMinusIcon,
   FileUpIcon,
   FolderTreeIcon,
   LayoutDashboardIcon,
   PackageIcon,
+  PackageOpenIcon,
   SettingsIcon,
   TruckIcon,
   UsersIcon,
@@ -24,6 +27,9 @@ import {
 
 const ICONS = {
   dashboard: LayoutDashboardIcon,
+  deliveries: PackageOpenIcon,
+  stock: BoxesIcon,
+  adjustments: ClipboardMinusIcon,
   products: PackageIcon,
   categories: FolderTreeIcon,
   suppliers: TruckIcon,

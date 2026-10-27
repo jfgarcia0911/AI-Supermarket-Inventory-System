@@ -64,6 +64,13 @@ export type SupplierProductImportRow = {
   preferred: boolean | null;
 };
 
+export type OpeningStockImportRow = {
+  row_number: number;
+  product_code: string;
+  quantity: number;
+  unit_cost: number | null;
+};
+
 export interface BuiltRows<T> {
   rows: T[];
   errors: RowError[];
@@ -228,4 +235,42 @@ export function buildSupplierProductRows(
     }
   }
   return { rows, errors, ignored };
+}
+
+export function buildOpeningStockRows(
+  table: SheetTable,
+  mapping: ColumnMapping,
+): BuiltRows<OpeningStockImportRow> {
+  const rows: OpeningStockImportRow[] = [];
+  const errors: RowError[] = [];
+
+  for (const sheetRow of table.rows) {
+    const get = cellGetter(sheetRow, mapping);
+    try {
+      const productCode =
+        parseBarcode(get("product_barcode"), "Barcode") ??
+        parseTillCode(get("product_till_code"));
+      if (!productCode) {
+        throw new CellError("The barcode or till code is missing.");
+      }
+      const quantity = parseNumber(get("quantity"), "The quantity counted");
+      if (quantity == null) {
+        throw new CellError("The quantity counted is missing.");
+      }
+
+      rows.push({
+        row_number: sheetRow.rowNumber,
+        product_code: productCode,
+        quantity: nonNegative(quantity, "The quantity counted") as number,
+        unit_cost: nonNegative(
+          parseNumber(get("unit_cost"), "The unit cost"),
+          "The unit cost",
+        ),
+      });
+    } catch (error) {
+      if (!(error instanceof CellError)) throw error;
+      errors.push({ row: sheetRow.rowNumber, message: error.message });
+    }
+  }
+  return { rows, errors, ignored: 0 };
 }

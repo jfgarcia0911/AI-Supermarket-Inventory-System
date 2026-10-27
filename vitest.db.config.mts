@@ -1,5 +1,6 @@
 // Database security tests. They sign in as the demo accounts against the
-// DEVELOPMENT database (npm run db:seed-dev first) and never leave data behind.
+// DEVELOPMENT database (npm run db:seed-dev first). Stock tests undo their own
+// changes, so stock levels end where they started.
 //   npm run test:db
 
 import { fileURLToPath } from "node:url";

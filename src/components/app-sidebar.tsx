@@ -20,6 +20,13 @@ function navFor(role: AppRole): NavGroup[] {
     label: "Shop",
     items: [
       { href: "/", label: "Dashboard", icon: "dashboard" },
+      { href: "/deliveries", label: "Deliveries", icon: "deliveries" },
+      { href: "/stock", label: "Stock", icon: "stock" },
+      {
+        href: "/adjustments",
+        label: "Waste & adjustments",
+        icon: "adjustments",
+      },
       { href: "/products", label: "Products", icon: "products" },
       { href: "/categories", label: "Categories", icon: "categories" },
       { href: "/suppliers", label: "Suppliers", icon: "suppliers" },

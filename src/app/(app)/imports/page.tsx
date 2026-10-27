@@ -42,6 +42,9 @@ function describe(kind: string, summary: Partial<ImportSummary>): string {
   if (kind === "supplier_products") {
     return `${summary.new_links ?? 0} new, ${summary.updated_links ?? 0} updated · ${summary.costs_recorded ?? 0} costs (${summary.price_increases ?? 0} increases)`;
   }
+  if (kind === "opening_stock") {
+    return `${summary.products_set ?? 0} products given opening stock`;
+  }
   return "";
 }
 

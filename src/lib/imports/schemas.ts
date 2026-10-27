@@ -41,6 +41,13 @@ const supplierProductRow = z.object({
   preferred: z.boolean().nullable(),
 });
 
+const openingStockRow = z.object({
+  row_number: z.number().int().positive(),
+  product_code: z.string().min(1).max(20),
+  quantity: z.number().nonnegative().max(1_000_000),
+  unit_cost: z.number().nonnegative().max(1_000_000).nullable(),
+});
+
 const common = {
   fileName: z.string().min(1).max(255),
   fingerprint: z.string().regex(/^[0-9a-f]{64}$/),
@@ -59,6 +66,13 @@ export const importRequestSchema = z.discriminatedUnion("kind", [
     supplierId: z.uuid(),
     ...common,
     rows: z.array(supplierProductRow).max(MAX_ROWS),
+  }),
+  z.object({
+    kind: z.literal("opening_stock"),
+    /** When the stock was counted (ISO date-time). */
+    asOf: z.iso.datetime({ offset: true }),
+    ...common,
+    rows: z.array(openingStockRow).max(MAX_ROWS),
   }),
 ]);
 
@@ -85,4 +99,7 @@ export interface ImportSummary {
   unchanged_links?: number;
   costs_recorded?: number;
   price_increases?: number;
+  // Opening stock
+  products_set?: number;
+  units_counted?: number;
 }

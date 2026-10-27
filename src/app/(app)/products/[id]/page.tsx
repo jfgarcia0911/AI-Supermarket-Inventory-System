@@ -44,6 +44,7 @@ import {
   setProductActive,
 } from "../actions";
 import { AddBarcodeForm } from "./add-barcode-form";
+import { StockCard } from "./stock-card";
 
 export const metadata: Metadata = { title: "Product" };
 
@@ -180,6 +181,14 @@ async function Product({
           </>
         )}
       </PageHeader>
+
+      <StockCard
+        productId={id}
+        soldBy={soldBy}
+        active={product.active ?? true}
+        reorderPoint={product.reorder_point}
+        role={user.role}
+      />
 
       <Card>
         <CardHeader>

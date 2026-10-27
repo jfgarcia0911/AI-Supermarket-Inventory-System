@@ -10,6 +10,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { type FormState, initialFormState } from "@/lib/form-state";
 
 type Action = (state: FormState, formData: FormData) => Promise<FormState>;
@@ -111,6 +115,59 @@ export function ThresholdsForm({
         ))}
       </FieldGroup>
       <SubmitButton pendingText="Saving…">Save limits</SubmitButton>
+    </form>
+  );
+}
+
+export function ReasonForm({ action }: { action: Action }) {
+  const [state, formAction] = useActionState(action, initialFormState);
+  return (
+    <form action={formAction} className="space-y-3">
+      <FormMessage state={state} />
+      <div className="flex flex-wrap items-end gap-3">
+        <Field
+          className="min-w-48 flex-1"
+          data-invalid={Boolean(state.fieldErrors.name)}
+        >
+          <FieldLabel htmlFor="reason-name">New reason</FieldLabel>
+          <Input
+            id="reason-name"
+            name="name"
+            maxLength={60}
+            required
+            defaultValue={state.values?.name}
+          />
+        </Field>
+        <Field className="w-48">
+          <FieldLabel htmlFor="reason-direction">Moves stock</FieldLabel>
+          <NativeSelect
+            id="reason-direction"
+            name="direction"
+            defaultValue={state.values?.direction ?? "decrease"}
+          >
+            <NativeSelectOption value="decrease">
+              Out (waste, loss)
+            </NativeSelectOption>
+            <NativeSelectOption value="increase">
+              In (found stock)
+            </NativeSelectOption>
+            <NativeSelectOption value="either">Either way</NativeSelectOption>
+          </NativeSelect>
+        </Field>
+        <label className="flex items-center gap-2 pb-2 text-sm">
+          <input
+            type="checkbox"
+            name="note_required"
+            value="on"
+            className="accent-primary"
+          />
+          Needs a note
+        </label>
+        <SubmitButton variant="outline" pendingText="Adding…">
+          Add reason
+        </SubmitButton>
+      </div>
+      <FieldErrors state={state} name="name" />
     </form>
   );
 }

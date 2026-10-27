@@ -44,8 +44,10 @@ import {
 } from "@/lib/imports/fields";
 import { readSpreadsheet } from "@/lib/imports/read-file";
 import {
+  buildOpeningStockRows,
   buildProductRows,
   buildSupplierProductRows,
+  type OpeningStockImportRow,
   type ProductImportRow,
   type RowError,
   type SheetTable,
@@ -53,6 +55,7 @@ import {
 } from "@/lib/imports/rows";
 import type { ImportRequest, ImportSummary } from "@/lib/imports/schemas";
 import { cellText } from "@/lib/imports/values";
+import { londonLocalToDate } from "@/lib/london-time";
 
 import { commitImport, previewImport } from "../actions";
 
@@ -64,8 +67,23 @@ interface LoadedFile {
   table: SheetTable;
 }
 
+const KIND_DESCRIPTIONS: Record<ImportKind, string> = {
+  products:
+    "Add new products and update existing ones (matched by barcode or till code).",
+  supplier_products:
+    "A supplier's codes, case sizes and case costs for our products.",
+  opening_stock:
+    "Your stock-take: how many of each product were on hand when you counted.",
+};
+
+const TEMPLATES: Record<ImportKind, string> = {
+  products: "/templates/products-template.csv",
+  supplier_products: "/templates/supplier-price-list-template.csv",
+  opening_stock: "/templates/opening-stock-template.csv",
+};
+
 interface Checked {
-  rows: (ProductImportRow | SupplierProductImportRow)[];
+  rows: (ProductImportRow | SupplierProductImportRow | OpeningStockImportRow)[];
   errors: RowError[];
   ignored: number;
   summary: ImportSummary;
@@ -77,14 +95,19 @@ export function ImportWizard({
   suppliers,
   initialKind,
   initialSupplierId,
+  defaultAsOf,
 }: {
   suppliers: { id: string; name: string }[];
   initialKind: ImportKind;
   initialSupplierId: string | null;
+  /** London "YYYY-MM-DDTHH:mm" to start the stock-take time with. */
+  defaultAsOf: string;
 }) {
   const [step, setStep] = useState<Step>("choose");
   const [kind, setKind] = useState<ImportKind>(initialKind);
   const [supplierId, setSupplierId] = useState(initialSupplierId ?? "");
+  const [asOf, setAsOf] = useState(defaultAsOf);
+  const asOfDate = londonLocalToDate(asOf);
   const [file, setFile] = useState<LoadedFile | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
   const [checked, setChecked] = useState<Checked | null>(null);
@@ -106,14 +129,23 @@ export function ImportWizard({
       mapping,
       rowsSkipped,
     };
-    return kind === "products"
-      ? { kind, ...common, rows: rows as ProductImportRow[] }
-      : {
-          kind,
-          supplierId,
-          ...common,
-          rows: rows as SupplierProductImportRow[],
-        };
+    if (kind === "products") {
+      return { kind, ...common, rows: rows as ProductImportRow[] };
+    }
+    if (kind === "opening_stock") {
+      return {
+        kind,
+        asOf: (asOfDate ?? new Date(NaN)).toISOString(),
+        ...common,
+        rows: rows as OpeningStockImportRow[],
+      };
+    }
+    return {
+      kind,
+      supplierId,
+      ...common,
+      rows: rows as SupplierProductImportRow[],
+    };
   };
 
   const chooseFile = (selected: File | undefined) => {
@@ -149,7 +181,9 @@ export function ImportWizard({
     const built =
       kind === "products"
         ? buildProductRows(file.table, mapping)
-        : buildSupplierProductRows(file.table, mapping, supplier?.name ?? "");
+        : kind === "opening_stock"
+          ? buildOpeningStockRows(file.table, mapping)
+          : buildSupplierProductRows(file.table, mapping, supplier?.name ?? "");
     if (built.rows.length === 0) {
       setChecked({
         rows: [],
@@ -222,7 +256,7 @@ export function ImportWizard({
         </CardHeader>
         <CardContent className="max-w-2xl space-y-6">
           {errorBanner}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             {(Object.keys(IMPORT_KIND_LABELS) as ImportKind[]).map((option) => (
               <label
                 key={option}
@@ -241,9 +275,7 @@ export function ImportWizard({
                     {IMPORT_KIND_LABELS[option]}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {option === "products"
-                      ? "Add new products and update existing ones (matched by barcode or till code)."
-                      : "A supplier's codes, case sizes and case costs for our products."}
+                    {KIND_DESCRIPTIONS[option]}
                   </span>
                 </span>
               </label>
@@ -278,6 +310,26 @@ export function ImportWizard({
             </Field>
           )}
 
+          {kind === "opening_stock" && (
+            <Field data-invalid={!asOfDate}>
+              <FieldLabel htmlFor="as_of">
+                When was the stock counted?
+              </FieldLabel>
+              <Input
+                id="as_of"
+                type="datetime-local"
+                className="max-w-60"
+                value={asOf}
+                onChange={(event) => setAsOf(event.target.value)}
+              />
+              <FieldDescription>
+                UK time. Count outside trading hours, for example after closing,
+                so no sales happen while you count. Each product can be given
+                opening stock once; after that, use adjustments.
+              </FieldDescription>
+            </Field>
+          )}
+
           <Field>
             <FieldLabel htmlFor="file">Spreadsheet</FieldLabel>
             <Input
@@ -285,18 +337,16 @@ export function ImportWizard({
               type="file"
               accept=".csv,.xlsx,.txt,text/csv"
               disabled={
-                pending || (kind === "supplier_products" && !supplierId)
+                pending ||
+                (kind === "supplier_products" && !supplierId) ||
+                (kind === "opening_stock" && !asOfDate)
               }
               onChange={(event) => chooseFile(event.target.files?.[0])}
             />
             <FieldDescription>
               CSV or Excel (.xlsx), up to 20,000 rows. Need a starting point?{" "}
               <a
-                href={
-                  kind === "products"
-                    ? "/templates/products-template.csv"
-                    : "/templates/supplier-price-list-template.csv"
-                }
+                href={TEMPLATES[kind]}
                 download
                 className="inline-flex items-center gap-1 underline"
               >
@@ -439,7 +489,11 @@ export function ImportWizard({
           (s.updated_products ?? 0) +
           (s.new_barcodes ?? 0) +
           (s.new_categories ?? 0)
-        : (s.new_links ?? 0) + (s.updated_links ?? 0) + (s.costs_recorded ?? 0);
+        : kind === "opening_stock"
+          ? (s.products_set ?? 0)
+          : (s.new_links ?? 0) +
+            (s.updated_links ?? 0) +
+            (s.costs_recorded ?? 0);
     const stats: [string, number | undefined][] =
       kind === "products"
         ? [
@@ -449,13 +503,18 @@ export function ImportWizard({
             ["New categories", s.new_categories],
             ["New barcodes", s.new_barcodes],
           ]
-        : [
-            ["New products for this supplier", s.new_links],
-            ["Updated", s.updated_links],
-            ["Already up to date", s.unchanged_links],
-            ["Costs recorded", s.costs_recorded],
-            ["Price increases", s.price_increases],
-          ];
+        : kind === "opening_stock"
+          ? [
+              ["Products given opening stock", s.products_set],
+              ["Units and kg counted", s.units_counted],
+            ]
+          : [
+              ["New products for this supplier", s.new_links],
+              ["Updated", s.updated_links],
+              ["Already up to date", s.unchanged_links],
+              ["Costs recorded", s.costs_recorded],
+              ["Price increases", s.price_increases],
+            ];
 
     return (
       <Card>
@@ -568,7 +627,9 @@ export function ImportWizard({
     const summary =
       kind === "products"
         ? `${result.new_products ?? 0} new products, ${result.updated_products ?? 0} updated, ${result.unchanged_products ?? 0} already up to date.`
-        : `${result.new_links ?? 0} new, ${result.updated_links ?? 0} updated, ${result.unchanged_links ?? 0} already up to date. ${result.costs_recorded ?? 0} costs recorded, ${result.price_increases ?? 0} of them increases.`;
+        : kind === "opening_stock"
+          ? `${result.products_set ?? 0} products now have their opening stock.`
+          : `${result.new_links ?? 0} new, ${result.updated_links ?? 0} updated, ${result.unchanged_links ?? 0} already up to date. ${result.costs_recorded ?? 0} costs recorded, ${result.price_increases ?? 0} of them increases.`;
     return (
       <Card>
         <CardHeader>
@@ -587,6 +648,8 @@ export function ImportWizard({
           <div className="flex flex-wrap gap-2">
             {kind === "products" ? (
               <Button render={<Link href="/products" />}>View products</Button>
+            ) : kind === "opening_stock" ? (
+              <Button render={<Link href="/stock" />}>View stock</Button>
             ) : (
               <Button render={<Link href={`/suppliers/${supplierId}`} />}>
                 View {supplier?.name}

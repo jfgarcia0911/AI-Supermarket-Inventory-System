@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { PageSkeleton } from "@/components/skeletons";
 import { requireRole } from "@/lib/auth";
-import type { ImportKind } from "@/lib/imports/fields";
+import { IMPORT_KIND_LABELS, type ImportKind } from "@/lib/imports/fields";
+import { dateToLondonLocal } from "@/lib/london-time";
 import { isUuid, paramText } from "@/lib/search-params";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,10 +28,9 @@ async function NewImport({
 }) {
   await requireRole("owner", "manager");
   const params = await searchParams;
+  const requested = paramText(params.kind) ?? "";
   const kind: ImportKind =
-    paramText(params.kind) === "supplier_products"
-      ? "supplier_products"
-      : "products";
+    requested in IMPORT_KIND_LABELS ? (requested as ImportKind) : "products";
   const supplier = paramText(params.supplier);
 
   const supabase = await createClient();
@@ -44,12 +44,13 @@ async function NewImport({
     <>
       <PageHeader
         title="Import from a spreadsheet"
-        description="Bring in your product list, or a supplier's codes, case sizes and costs."
+        description="Bring in your product list, a supplier's codes, case sizes and costs, or your opening stock-take."
       />
       <ImportWizard
         suppliers={suppliers ?? []}
         initialKind={kind}
         initialSupplierId={isUuid(supplier) ? supplier : null}
+        defaultAsOf={dateToLondonLocal(new Date())}
       />
     </>
   );

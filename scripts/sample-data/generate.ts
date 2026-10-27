@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import {
   buildCatalogue,
   buildDailySales,
+  buildOpeningStock,
+  openingStockCsv,
   productsCsv,
   salesCsv,
   supplierProductsCsv,
@@ -35,6 +37,11 @@ writeFileSync(`${outDir}suppliers.csv`, suppliersCsv());
 writeFileSync(
   `${outDir}supplier-products.csv`,
   supplierProductsCsv(supplierProducts),
+);
+// Counted on the evening of 24 Sep 2026, the night before the sales start.
+writeFileSync(
+  `${outDir}opening-stock.csv`,
+  openingStockCsv(buildOpeningStock(products)),
 );
 
 // Start from an empty folder so no stale days are left behind.

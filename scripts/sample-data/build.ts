@@ -443,6 +443,45 @@ export function supplierProductsCsv(rows: SampleSupplierProduct[]): string {
   ]);
 }
 
+export interface OpeningStockRow {
+  product: SampleProduct;
+  quantity: number;
+}
+
+/**
+ * A stock-take sheet: what was on the shelves the evening before the sample
+ * sales start. Roughly one to two weeks of sales, never below the reorder
+ * point; products that never sell still have a case on the shelf.
+ */
+export function buildOpeningStock(
+  products: SampleProduct[],
+): OpeningStockRow[] {
+  const random = seededRandom(hashString("opening-stock"));
+  return products.map((product) => {
+    const days = 7 + random() * 7;
+    const base =
+      product.averageDailySales === 0
+        ? product.caseUnits
+        : Math.max(product.reorderPoint, product.averageDailySales * days);
+    const quantity =
+      product.soldBy === "kg" ? Math.round(base * 10) / 10 : Math.ceil(base);
+    return { product, quantity };
+  });
+}
+
+export function openingStockCsv(rows: OpeningStockRow[]): string {
+  return toCsv([
+    ["Barcode", "Till Code", "Product", "Size", "Quantity Counted"],
+    ...rows.map(({ product, quantity }) => [
+      product.barcode,
+      product.tillCode,
+      product.name,
+      product.size,
+      product.soldBy === "kg" ? quantity.toFixed(1) : quantity,
+    ]),
+  ]);
+}
+
 export function salesCsv(rows: SalesRow[]): string {
   return toCsv([
     [

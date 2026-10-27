@@ -13,12 +13,15 @@ import {
   formInvalid,
   formSuccess,
 } from "@/lib/form-state";
+import type { ImportSummary } from "@/lib/imports/schemas";
+import { londonLocalToDate } from "@/lib/london-time";
 import { createClient } from "@/lib/supabase/server";
 import {
   formValues,
   optionalNumber,
   optionalText,
   requiredId,
+  requiredNumber,
   requiredText,
 } from "@/lib/validation";
 
@@ -236,4 +239,73 @@ export async function removeBarcode(
   }
   revalidatePath(`/products/${productId}`);
   return formSuccess("Barcode removed.");
+}
+
+const openingStockSchema = z.object({
+  quantity: requiredNumber("The quantity counted", { min: 0, max: 1_000_000 }),
+  counted_at: z.string().transform((value, ctx) => {
+    const date = londonLocalToDate(value);
+    if (!date) {
+      ctx.addIssue({ code: "custom", message: "Enter when it was counted." });
+      return z.NEVER;
+    }
+    return date.toISOString();
+  }),
+});
+
+/** Opening stock for one product, entered by hand on its page. */
+export async function setOpeningStock(
+  productId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!(await actionUser("owner", "manager"))) {
+    return formFailure(
+      "Only owners and managers can set opening stock.",
+      formData,
+    );
+  }
+  const parsed = openingStockSchema.safeParse(formValues(formData));
+  if (!parsed.success) {
+    return formInvalid(parsed.error, formData);
+  }
+  const request = {
+    p_rows: [
+      {
+        row_number: 1,
+        product_id: productId,
+        quantity: parsed.data.quantity,
+        unit_cost: null,
+      },
+    ],
+    p_as_of: parsed.data.counted_at,
+  };
+
+  // Check first, so a problem comes back as a clear message.
+  const supabase = await createClient();
+  const { data: preview, error: previewError } = await supabase.rpc(
+    "import_opening_stock",
+    {
+      ...request,
+      p_dry_run: true,
+    },
+  );
+  if (previewError) {
+    return formFailure(friendlyDbError(previewError), formData);
+  }
+  const problem = (preview as unknown as ImportSummary | null)?.errors[0];
+  if (problem) {
+    return formFailure(problem.message, formData);
+  }
+
+  const { error } = await supabase.rpc("import_opening_stock", {
+    ...request,
+    p_dry_run: false,
+  });
+  if (error) {
+    return formFailure(friendlyDbError(error), formData);
+  }
+  revalidatePath(`/products/${productId}`);
+  revalidatePath("/stock", "layout");
+  return formSuccess("Opening stock saved.");
 }

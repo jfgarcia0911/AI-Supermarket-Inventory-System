@@ -1,28 +1,8 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const password = process.env.DEMO_PASSWORD ?? "";
+import { requirePassword, signIn, snap } from "./helpers";
 
-async function signIn(page: Page, email: string) {
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL("/");
-}
-
-async function snap(page: Page, name: string) {
-  await page.screenshot({
-    path: test.info().outputPath(`${name}.png`),
-    fullPage: true,
-  });
-}
-
-test.beforeAll(() => {
-  if (!password)
-    throw new Error(
-      "Set DEMO_PASSWORD in .env.local and run npm run db:seed-dev.",
-    );
-});
+test.beforeAll(requirePassword);
 
 test("signed-out visitors are sent to the sign-in page", async ({ page }) => {
   await page.goto("/products");
@@ -47,7 +27,9 @@ test("the owner can browse products, costs and users", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Hello, Demo" }),
   ).toBeVisible();
-  await expect(page.getByText("Missing a selling price")).toBeVisible();
+  await expect(page.getByText("Stock value")).toBeVisible();
+  await expect(page.getByText("Waiting for you")).toBeVisible();
+  await expect(page.getByText("Recent deliveries")).toBeVisible();
   await snap(page, "dashboard");
 
   await page.goto("/products?q=semi-skimmed");
@@ -81,6 +63,12 @@ test("the owner can browse products, costs and users", async ({ page }) => {
   await page.goto("/settings/users");
   await expect(page.getByText("staff@example.com")).toBeVisible();
   await snap(page, "users");
+
+  await page.goto("/settings");
+  await expect(
+    page.getByRole("cell", { name: "Theft or unknown loss" }),
+  ).toBeVisible();
+  await snap(page, "settings");
 });
 
 test("previewing an import saves nothing", async ({ page }) => {

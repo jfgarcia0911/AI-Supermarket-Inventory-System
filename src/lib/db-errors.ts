@@ -24,6 +24,9 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
     "This supplier already uses that code for another product.",
   supplier_products_preferred_key:
     "That product already has a preferred supplier.",
+  supplier_invoices_number_key:
+    "This supplier already has a delivery with that invoice number.",
+  adjustment_reasons_name_key: "There is already a reason with that name.",
   profiles_email_key: "Someone already has an account with that email address.",
 };
 

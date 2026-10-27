@@ -1,7 +1,7 @@
 // What each kind of import expects, and how spreadsheet columns are matched
 // to it automatically by their header text.
 
-export type ImportKind = "products" | "supplier_products";
+export type ImportKind = "products" | "supplier_products" | "opening_stock";
 
 export interface ImportField {
   key: string;
@@ -15,6 +15,7 @@ export interface ImportField {
 export const IMPORT_KIND_LABELS: Record<ImportKind, string> = {
   products: "Products",
   supplier_products: "Supplier price list",
+  opening_stock: "Opening stock",
 };
 
 export const IMPORT_FIELDS: Record<ImportKind, ImportField[]> = {
@@ -167,6 +168,40 @@ export const IMPORT_FIELDS: Record<ImportKind, ImportField[]> = {
       synonyms: ["preferred", "preferred supplier"],
     },
   ],
+  opening_stock: [
+    {
+      key: "product_barcode",
+      label: "Barcode",
+      help: "Each row needs the product's barcode or till code.",
+      synonyms: ["barcode", "product barcode", "ean", "upc"],
+    },
+    {
+      key: "product_till_code",
+      label: "Till code",
+      synonyms: ["till code", "product till code", "plu"],
+    },
+    {
+      key: "quantity",
+      label: "Quantity counted",
+      required: true,
+      help: "Single items, or kg for loose goods.",
+      synonyms: [
+        "quantity counted",
+        "counted",
+        "quantity",
+        "qty",
+        "count",
+        "stock",
+        "on hand",
+      ],
+    },
+    {
+      key: "unit_cost",
+      label: "Unit cost (ex VAT)",
+      help: "Optional. Otherwise the preferred supplier's latest cost is used.",
+      synonyms: ["unit cost ex vat", "unit cost", "cost"],
+    },
+  ],
 };
 
 /** Field key -> index of the spreadsheet column it comes from. */
@@ -219,12 +254,12 @@ export function mappingProblems(
     problems.push("Choose a column for the barcode, the till code, or both.");
   }
   if (
-    kind === "supplier_products" &&
+    (kind === "supplier_products" || kind === "opening_stock") &&
     !has("product_barcode") &&
     !has("product_till_code")
   ) {
     problems.push(
-      "Choose a column for our product's barcode, its till code, or both.",
+      "Choose a column for the product's barcode, its till code, or both.",
     );
   }
   return problems;

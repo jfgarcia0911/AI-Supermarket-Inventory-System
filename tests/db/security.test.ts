@@ -1,33 +1,11 @@
 // Proves the database itself enforces who may see and change what, whatever
 // the app does. Runs against the development database as the demo accounts.
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { withCheckDigit } from "@/lib/barcodes";
-import type { Database } from "@/lib/supabase/database.types";
 
-type Client = SupabaseClient<Database>;
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
-const password = process.env.DEMO_PASSWORD ?? "";
-
-function client(): Client {
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
-async function signIn(email: string): Promise<{ db: Client; id: string }> {
-  const db = client();
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
-  if (error)
-    throw new Error(
-      `${email}: ${error.message}. Run npm run db:seed-dev first.`,
-    );
-  return { db, id: data.user.id };
-}
+import { type Client, client, type SignedIn, signInAll } from "./helpers";
 
 // A barcode no real or sample product uses.
 const UNUSED_BARCODE = withCheckDigit("509999912345");
@@ -52,25 +30,15 @@ const dryRunRow = {
 const FINGERPRINT = "0".repeat(64);
 
 let anon: Client;
-let owner: { db: Client; id: string };
-let manager: { db: Client; id: string };
-let staff: { db: Client; id: string };
-let viewer: { db: Client; id: string };
+let owner: SignedIn;
+let manager: SignedIn;
+let staff: SignedIn;
+let viewer: SignedIn;
 let someProductId: string;
 
 beforeAll(async () => {
-  if (!url || !key || !password) {
-    throw new Error(
-      "Set the Supabase variables and DEMO_PASSWORD in .env.local.",
-    );
-  }
   anon = client();
-  [owner, manager, staff, viewer] = await Promise.all([
-    signIn("owner@example.com"),
-    signIn("manager@example.com"),
-    signIn("staff@example.com"),
-    signIn("viewer@example.com"),
-  ]);
+  ({ owner, manager, staff, viewer } = await signInAll());
   const { data } = await owner.db
     .from("products")
     .select("id")

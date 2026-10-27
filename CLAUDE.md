@@ -22,10 +22,15 @@ section before building a feature, and keep the design and the code in step.
 - Database: write a new file in `supabase/migrations/` (never edit an applied
   one), then `npm run db:push` and `npm run db:types`.
 - `npm run db:seed-dev -- --confirm-dev` loads demo accounts
-  (owner/manager/staff/viewer@example.com, password `DEMO_PASSWORD`) and the
-  sample data into the development database. Re-running changes nothing.
+  (owner/manager/staff/viewer@example.com, password `DEMO_PASSWORD`), the
+  sample data, the opening stock and three demo deliveries into the
+  development database. Re-running changes nothing.
 - `npm run test:db` (RLS tests against the dev database) and `npm run test:e2e`
   (Playwright, after `npm run build`) need `.env.local`; they are not in CI.
+  Tests that change stock must undo it (void, or an adjustment the other way);
+  db tests use the switched-off "Database test product". If a run is
+  interrupted, void its leftover test deliveries and check
+  `stock_ledger_mismatches()`.
 
 ## Stack
 
@@ -47,6 +52,13 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   that does the work and rolls it back, so the preview matches the real thing.
 - The browser parses spreadsheets (`src/lib/imports`); the server re-validates
   the rows with Zod and the database checks them again.
+- Every stock change goes through `private.apply_movement` (movement, its cost,
+  the level and the average cost). Public functions (`post_delivery`,
+  `request_adjustment`, `import_opening_stock`, …) call it; nothing else
+  writes the ledger tables.
+- `src/components/product-search.tsx` finds products by supplier code,
+  barcode, till code or name; a single code match is chosen straight away so a
+  scanner works like a keyboard.
 
 ## Gotchas
 
@@ -68,6 +80,14 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
 - In `supabase/config.toml`, `[auth.email] enable_signup` must stay `true`: on
   the hosted project it switches email + password sign-in off entirely.
   Sign-ups are blocked by `[auth] enable_signup = false`.
+- `private.audit()` names a row by `id`, `code`, `key`, `invoice_id` or
+  `line_id`. A new audited table keyed by anything else fails every write.
+- A form that disappears after its action (posting, voiding) must show its
+  toast inside the action wrapper passed to `useActionState`, not in an
+  effect: the effect never runs once the form is gone.
+- The React Compiler lint (`react-hooks/purity`) rejects `Date.now()` in
+  render, server components included. Put time checks in a helper in
+  `src/lib` (see `isPostingOverdue`).
 
 ## Inventory rules that must never be broken
 
@@ -78,8 +98,11 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   `numeric` with 4 decimal places, ex VAT unless the name says otherwise. Never
   store money or quantities as floating point.
 - Every table has Row Level Security. Stock staff must never be able to read
-  cost data: costs live in their own tables (`supplier_cost_history`) that only
-  owners, managers and viewers can read, and screens hide cost columns too.
+  cost data: costs live in their own tables (`supplier_cost_history`,
+  `stock_costs`, `stock_movement_costs`, `supplier_invoice_totals`,
+  `supplier_invoice_line_costs`) that only owners, managers and viewers can
+  read, and screens hide cost columns too. Never add a cost column to a table
+  or view staff can read.
 - Times are stored in UTC and shown in Europe/London time.
 - Schema changes only as migrations in `supabase/migrations/`.
 - Secrets live in `.env.local` and Vercel environment variables. Only

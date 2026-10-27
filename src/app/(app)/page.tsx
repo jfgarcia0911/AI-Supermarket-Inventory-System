@@ -1,10 +1,13 @@
 import {
+  AlertTriangleIcon,
+  CheckCircle2Icon,
+  ClipboardCheckIcon,
   FileUpIcon,
-  FolderTreeIcon,
   PackageIcon,
-  PlusIcon,
-  TagIcon,
-  TruckIcon,
+  PackageOpenIcon,
+  PoundSterlingIcon,
+  Trash2Icon,
+  TrendingDownIcon,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,6 +15,7 @@ import { Suspense } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { HeaderSkeleton } from "@/components/skeletons";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,9 +26,16 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
-import { formatDateTime } from "@/lib/format";
+import {
+  DOCUMENT_LABELS,
+  isPostingOverdue,
+  STATUS_BADGE,
+  STATUS_LABELS,
+} from "@/lib/deliveries";
+import { formatDateTime, formatMoney } from "@/lib/format";
 import { IMPORT_KIND_LABELS, type ImportKind } from "@/lib/imports/fields";
-import { canEditCatalogue } from "@/lib/roles";
+import { canEditCatalogue, canSeeCosts } from "@/lib/roles";
+import type { StockSummary } from "@/lib/stock";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -46,6 +57,10 @@ function DashboardSkeleton() {
           <Skeleton key={i} className="h-28" />
         ))}
       </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-56" />
+        <Skeleton className="h-56" />
+      </div>
     </div>
   );
 }
@@ -54,8 +69,21 @@ async function Dashboard() {
   const user = await requireUser();
   const supabase = await createClient();
   const count = { count: "exact" as const, head: true };
+  const canEdit = canEditCatalogue(user.role);
+  const showCosts = canSeeCosts(user.role);
 
-  const [products, noPrice, categories, suppliers] = await Promise.all([
+  const [
+    { data: summaryData },
+    products,
+    noPrice,
+    categories,
+    suppliers,
+    { data: openDeliveries },
+    { data: recentDeliveries },
+    pendingAdjustments,
+    { data: unpostedSetting },
+  ] = await Promise.all([
+    supabase.rpc("stock_summary"),
     supabase.from("products").select("id", count).eq("active", true),
     supabase
       .from("products")
@@ -64,6 +92,24 @@ async function Dashboard() {
       .is("sell_price", null),
     supabase.from("categories").select("id", count).eq("active", true),
     supabase.from("suppliers").select("id", count).eq("active", true),
+    supabase
+      .from("supplier_invoices")
+      .select("id, status, checked_in_at")
+      .in("status", ["draft", "checked_in"]),
+    supabase
+      .from("delivery_overview")
+      .select("id, supplier_name, document_type, status, delivered_at")
+      .order("delivered_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("stock_adjustments")
+      .select("id", count)
+      .eq("status", "pending"),
+    supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "unposted_delivery_hours")
+      .maybeSingle(),
   ]);
   const imports =
     user.role !== "staff"
@@ -76,49 +122,122 @@ async function Dashboard() {
         ).data
       : null;
 
-  const canEdit = canEditCatalogue(user.role);
+  const summary = summaryData as unknown as StockSummary | null;
+  const unpostedHours = Number(unpostedSetting?.value ?? 24);
+  const drafts = (openDeliveries ?? []).filter((d) => d.status === "draft");
+  const toPost = (openDeliveries ?? []).filter(
+    (d) => d.status === "checked_in",
+  );
+  const overdue = toPost.filter((d) =>
+    isPostingOverdue(d.checked_in_at, unpostedHours),
+  );
+  const toApprove = pendingAdjustments.count ?? 0;
+
   const tiles = [
+    showCosts
+      ? {
+          label: "Stock value",
+          value: formatMoney(summary?.stock_value ?? 0),
+          href: "/stock",
+          icon: PoundSterlingIcon,
+        }
+      : {
+          label: "Products",
+          value: (products.count ?? 0).toLocaleString("en-GB"),
+          href: "/products",
+          icon: PackageIcon,
+        },
     {
-      label: "Products",
-      value: products.count,
-      href: "/products",
-      icon: PackageIcon,
+      label: "Low stock",
+      value: (summary?.low_stock ?? 0).toLocaleString("en-GB"),
+      href: "/stock?show=low",
+      icon: TrendingDownIcon,
     },
     {
-      label: "Categories",
-      value: categories.count,
-      href: "/categories",
-      icon: FolderTreeIcon,
+      label: "Below zero",
+      value: (summary?.negative_stock ?? 0).toLocaleString("en-GB"),
+      href: "/stock?show=negative",
+      icon: AlertTriangleIcon,
     },
     {
-      label: "Suppliers",
-      value: suppliers.count,
-      href: "/suppliers",
-      icon: TruckIcon,
-    },
-    {
-      label: "Missing a selling price",
-      value: noPrice.count,
-      href: "/products",
-      icon: TagIcon,
+      label: canEdit ? "To approve" : "Waiting for approval",
+      value: toApprove.toLocaleString("en-GB"),
+      href: "/adjustments",
+      icon: ClipboardCheckIcon,
     },
   ];
+
+  // The jobs list: only the things that need someone to act.
+  const jobs: { text: string; href: string; urgent?: boolean }[] = [];
+  if (toPost.length) {
+    jobs.push({
+      text: canEdit
+        ? `${plural(toPost.length, "delivery", "deliveries")} to check costs and post`
+        : `${plural(toPost.length, "delivery", "deliveries")} waiting for a manager to post`,
+      href: "/deliveries",
+      urgent: overdue.length > 0,
+    });
+  }
+  if (overdue.length) {
+    jobs.push({
+      text: `${plural(overdue.length, "delivery", "deliveries")} checked in more than ${unpostedHours} hours ago and still not posted`,
+      href: "/deliveries",
+      urgent: true,
+    });
+  }
+  if (drafts.length) {
+    jobs.push({
+      text: `${plural(drafts.length, "delivery", "deliveries")} still being checked in`,
+      href: "/deliveries",
+    });
+  }
+  if (toApprove && canEdit) {
+    jobs.push({
+      text: `${plural(toApprove, "adjustment", "adjustments")} to approve`,
+      href: "/adjustments",
+      urgent: true,
+    });
+  }
+  if (summary?.negative_stock) {
+    jobs.push({
+      text: `${plural(summary.negative_stock, "product", "products")} below zero: something was probably not recorded`,
+      href: "/stock?show=negative",
+    });
+  }
+  if (canEdit && summary?.never_counted) {
+    jobs.push({
+      text: `${plural(summary.never_counted, "product", "products")} with no opening stock yet`,
+      href: "/stock?show=not_counted",
+    });
+  }
+  if (canEdit && noPrice.count) {
+    jobs.push({
+      text: `${plural(noPrice.count, "product", "products")} missing a selling price`,
+      href: "/products",
+    });
+  }
 
   return (
     <>
       <PageHeader
         title={`Hello, ${user.fullName.split(" ")[0]}`}
-        description="The shop's catalogue at a glance."
+        description="Today's stock at a glance."
       >
         {canEdit && (
+          <Button variant="outline" render={<Link href="/imports/new" />}>
+            <FileUpIcon />
+            Import
+          </Button>
+        )}
+        {user.role !== "viewer" && (
           <>
-            <Button variant="outline" render={<Link href="/imports/new" />}>
-              <FileUpIcon />
-              Import
+            <Button variant="outline" render={<Link href="/adjustments" />}>
+              <Trash2Icon />
+              Record waste
             </Button>
-            <Button render={<Link href="/products/new" />}>
-              <PlusIcon />
-              Add product
+            <Button render={<Link href="/deliveries/new" />}>
+              <PackageOpenIcon />
+              Start a delivery
             </Button>
           </>
         )}
@@ -134,13 +253,124 @@ async function Dashboard() {
                   {tile.label}
                 </CardDescription>
                 <CardTitle className="text-3xl tabular-nums">
-                  {(tile.value ?? 0).toLocaleString("en-GB")}
+                  {tile.value}
                 </CardTitle>
               </CardHeader>
             </Card>
           </Link>
         ))}
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Waiting for you</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {jobs.length ? (
+              <ul className="divide-y text-sm">
+                {jobs.map((job) => (
+                  <li key={job.text}>
+                    <Link
+                      href={job.href}
+                      className="flex items-start gap-2 py-2 hover:underline"
+                    >
+                      <span
+                        aria-hidden
+                        className={`mt-1.5 size-2 shrink-0 rounded-full ${
+                          job.urgent ? "bg-destructive" : "bg-muted-foreground"
+                        }`}
+                      />
+                      {job.text}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2Icon className="size-4" />
+                Nothing waiting.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent deliveries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentDeliveries?.length ? (
+              <ul className="divide-y text-sm">
+                {recentDeliveries.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={`/deliveries/${d.id}`}
+                      className="flex flex-wrap items-center justify-between gap-2 py-2 hover:underline"
+                    >
+                      <span>
+                        <span className="font-medium">{d.supplier_name}</span>
+                        {d.document_type === "credit_note" && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            · {DOCUMENT_LABELS.credit_note}
+                          </span>
+                        )}
+                        <span className="block text-xs text-muted-foreground">
+                          {formatDateTime(d.delivered_at)}
+                        </span>
+                      </span>
+                      {d.status && (
+                        <Badge variant={STATUS_BADGE[d.status]}>
+                          {STATUS_LABELS[d.status]}
+                        </Badge>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No deliveries yet.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Catalogue</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-3 gap-4 text-sm">
+            {[
+              { label: "Products", value: products.count, href: "/products" },
+              {
+                label: "Categories",
+                value: categories.count,
+                href: "/categories",
+              },
+              {
+                label: "Suppliers",
+                value: suppliers.count,
+                href: "/suppliers",
+              },
+            ].map((item) => (
+              <div key={item.label}>
+                <dt className="text-muted-foreground">
+                  <Link href={item.href} className="hover:underline">
+                    {item.label}
+                  </Link>
+                </dt>
+                <dd className="text-xl font-semibold tabular-nums">
+                  {(item.value ?? 0).toLocaleString("en-GB")}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </CardContent>
+      </Card>
 
       {imports && (
         <Card>
@@ -184,17 +414,10 @@ async function Dashboard() {
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming next</CardTitle>
-          <CardDescription>
-            Phase 2 adds the stock ledger: recording deliveries, adjustments and
-            waste, and the opening stock count. Phase 3 brings in daily till
-            sales, so stock levels stay up to date.
-          </CardDescription>
-        </CardHeader>
-      </Card>
     </>
   );
+}
+
+function plural(n: number, one: string, many: string): string {
+  return `${n.toLocaleString("en-GB")} ${n === 1 ? one : many}`;
 }

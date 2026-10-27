@@ -91,3 +91,59 @@ export async function updateThresholds(
   revalidatePath("/settings");
   return formSuccess("Limits saved.");
 }
+
+const reasonSchema = z.object({
+  name: requiredText("The reason", 60),
+  direction: z.enum(["decrease", "increase", "either"], {
+    error: "Choose which way it moves stock.",
+  }),
+  note_required: z.preprocess(
+    (value) => typeof value === "string" && value !== "",
+    z.boolean(),
+  ),
+});
+
+export async function addReason(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!(await actionUser("owner"))) {
+    return formFailure(NOT_OWNER, formData);
+  }
+  const parsed = reasonSchema.safeParse(formValues(formData));
+  if (!parsed.success) {
+    return formInvalid(parsed.error, formData);
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("adjustment_reasons")
+    .insert(parsed.data);
+  if (error) {
+    return formFailure(friendlyDbError(error), formData);
+  }
+  revalidatePath("/settings");
+  revalidatePath("/adjustments");
+  return formSuccess(`Reason "${parsed.data.name}" added.`);
+}
+
+export async function setReasonActive(
+  reasonId: string,
+  active: boolean,
+): Promise<FormState> {
+  if (!(await actionUser("owner"))) {
+    return formFailure(NOT_OWNER);
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("adjustment_reasons")
+    .update({ active })
+    .eq("id", reasonId);
+  if (error) {
+    return formFailure(friendlyDbError(error));
+  }
+  revalidatePath("/settings");
+  revalidatePath("/adjustments");
+  return formSuccess(
+    active ? "Reason switched back on." : "Reason switched off.",
+  );
+}
