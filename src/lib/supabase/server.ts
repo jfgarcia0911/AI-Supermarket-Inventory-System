@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
+import { io } from "next/cache";
 import { cookies } from "next/headers";
 
 import type { Database } from "./database.types";
@@ -12,6 +13,11 @@ import { supabasePublishableKey, supabaseUrl } from "./env";
  */
 export async function createClient() {
   const cookieStore = await cookies();
+  // A new client starts checking the saved session at once, which reads the
+  // clock. During a background prefetch the cookies are readable, so they do
+  // not pause rendering; io() does, keeping per-user data out of prerendered
+  // page shells. In real requests and Server Actions it resolves immediately.
+  await io();
 
   return createServerClient<Database>(supabaseUrl(), supabasePublishableKey(), {
     cookies: {

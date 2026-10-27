@@ -53,6 +53,11 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
 - Cache Components: reading cookies or data outside `<Suspense>` fails the
   build. No `Math.random()` / `Date.now()` in anything prerendered (including
   Suspense fallbacks). `export const dynamic` is not allowed.
+- Background prefetches prerender with cookies available, so `cookies()` does
+  not pause them. A new Supabase client reads the clock straight away, so
+  `createClient()` in `src/lib/supabase/server.ts` awaits `io()` first. Check
+  the `next start` log for "blocking-prerender" errors after changes: the
+  browser tests still pass when they happen.
 - A `"use server"` file may export only async functions.
 - shadcn/ui here is built on Base UI: use `render={<Link href=… />}`, not
   `asChild`.
