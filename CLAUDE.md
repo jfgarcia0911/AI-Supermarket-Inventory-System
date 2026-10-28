@@ -85,6 +85,14 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
   for page titles, and `font-display` (Fraunces) for big numbers. Chart colours
   (`--chart-*`) were checked with the dataviz palette validator; re-check any
   change.
+- Glass: cards, the header, the phone dock and pop-ups are frosted glass
+  (`glass`, `glass-strong`, `glass-rim` utilities in `globals.css`) over a
+  fixed colour wash (`body::before`, `--wash-*`). A table outside a card gets
+  its own glass panel automatically. With reduced transparency or no
+  `backdrop-filter` the glass turns solid. Keep muted text at 4.5:1 or more
+  if you make the glass clearer. Playwright's default headless shell skips
+  the blur at `deviceScaleFactor: 2`; screenshot with
+  `chromium.launch({ channel: "chromium" })` to see it.
 - `src/components/product-search.tsx` finds products by supplier code,
   barcode, till code or name; a single code match is chosen straight away so a
   scanner works like a keyboard.

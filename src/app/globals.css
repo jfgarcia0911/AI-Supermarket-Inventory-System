@@ -9,6 +9,11 @@
  * paper-cream background, and citrus orange for the few things that should
  * catch the eye. Headings and big numbers use Fraunces, a soft serif; the
  * rest uses Figtree, which stays easy to read in dense tables.
+ *
+ * Glass: cards, bars and menus are frosted glass (the `glass` and
+ * `glass-strong` utilities) over a soft wash of green, citrus and mint fixed
+ * behind the page. They turn solid when the device asks for less
+ * transparency or cannot blur.
  */
 
 @theme inline {
@@ -109,7 +114,20 @@
   --chart-4: oklch(0.82 0.13 88);
   --chart-5: oklch(0.56 0.1 248);
   --radius: 0.7rem;
-  --sidebar: oklch(0.29 0.05 160);
+  /* The wash of colour behind the glass. */
+  --wash-1: oklch(0.85 0.11 155 / 0.85);
+  --wash-2: oklch(0.88 0.11 66 / 0.8);
+  --wash-3: oklch(0.9 0.11 112 / 0.7);
+  --wash-4: oklch(0.87 0.07 200 / 0.65);
+  /* Frosted glass: see-through enough to show the wash, opaque enough
+     that muted text keeps at least 4.5:1 contrast. */
+  --glass: color-mix(in oklch, var(--card) 58%, transparent);
+  --glass-strong: color-mix(in oklch, var(--popover) 86%, transparent);
+  --glass-blur: blur(18px) saturate(1.6);
+  --glass-sheen: oklch(1 0 0 / 0.45);
+  --glass-rim: oklch(1 0 0 / 0.9);
+  --glass-line: oklch(0.35 0.04 160 / 0.1);
+  --sidebar: oklch(0.29 0.05 160 / 0.9);
   --sidebar-foreground: oklch(0.92 0.025 120);
   --sidebar-primary: oklch(0.78 0.16 62);
   --sidebar-primary-foreground: oklch(0.25 0.05 45);
@@ -156,7 +174,16 @@
   --chart-3: oklch(0.6 0.08 150);
   --chart-4: oklch(0.85 0.12 90);
   --chart-5: oklch(0.7 0.09 245);
-  --sidebar: oklch(0.155 0.02 165);
+  --wash-1: oklch(0.42 0.11 155 / 0.55);
+  --wash-2: oklch(0.46 0.1 60 / 0.32);
+  --wash-3: oklch(0.42 0.08 118 / 0.32);
+  --wash-4: oklch(0.42 0.07 205 / 0.4);
+  --glass: color-mix(in oklch, var(--card) 60%, transparent);
+  --glass-strong: color-mix(in oklch, var(--popover) 88%, transparent);
+  --glass-sheen: oklch(1 0 0 / 0.05);
+  --glass-rim: oklch(1 0 0 / 0.14);
+  --glass-line: oklch(1 0 0 / 0.08);
+  --sidebar: oklch(0.155 0.02 165 / 0.82);
   --sidebar-foreground: oklch(0.9 0.02 120);
   --sidebar-primary: oklch(0.78 0.15 60);
   --sidebar-primary-foreground: oklch(0.22 0.05 45);
@@ -175,23 +202,24 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* A faint green glow from the top, like light through a shop window. */
-    background-image:
-      radial-gradient(
-        ellipse 80% 50% at 15% -10%,
-        color-mix(in oklch, var(--primary) 7%, transparent),
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 60% 40% at 100% 0%,
-        color-mix(in oklch, var(--citrus) 6%, transparent),
-        transparent 70%
-      );
-    background-attachment: fixed;
     font-feature-settings: "ss01";
   }
-  /* Paper grain, too faint to notice until it is gone. */
+  /* The wash behind the glass: soft pools of colour, fixed in place so the
+     panels slide over them as the page scrolls. */
   body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image:
+      radial-gradient(44rem 30rem at 30% 8%, var(--wash-1), transparent 70%),
+      radial-gradient(36rem 30rem at 96% 6%, var(--wash-2), transparent 70%),
+      radial-gradient(44rem 32rem at 74% 78%, var(--wash-3), transparent 70%),
+      radial-gradient(34rem 28rem at 16% 92%, var(--wash-4), transparent 70%);
+  }
+  /* Paper grain, too faint to notice until it is gone. */
+  body::after {
     content: "";
     position: fixed;
     inset: 0;
@@ -200,7 +228,7 @@
     opacity: 0.035;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .dark body::before {
+  .dark body::after {
     opacity: 0.05;
   }
   h1,
@@ -238,9 +266,14 @@
     animation-delay: 240ms;
   }
 
-  /* A soft diagonal pattern for brand panels. */
+  /* A soft diagonal pattern for brand panels, with a glassy shine on top. */
   .awning {
     background-image:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, white 14%, transparent),
+        transparent 42%
+      ),
       repeating-linear-gradient(
         135deg,
         color-mix(in oklch, white 6%, transparent) 0 14px,
@@ -251,6 +284,97 @@
         var(--banner),
         color-mix(in oklch, var(--banner), black 28%)
       );
+  }
+}
+
+/* Frosted glass for cards and bars, with a soft sheen across the top left. */
+@utility glass {
+  background-color: var(--glass);
+  background-image: linear-gradient(
+    150deg,
+    var(--glass-sheen),
+    transparent 50%
+  );
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* A table on its own (not already inside a card or dialog) sits on its own
+   glass panel, with a little room either side. */
+@layer components {
+  [data-slot="table-container"]:not([data-slot="card"] *, [role="dialog"] *) {
+    padding-inline: 0.5rem;
+    border-radius: var(--radius-xl);
+    background-color: var(--glass);
+    background-image: linear-gradient(
+      150deg,
+      var(--glass-sheen),
+      transparent 50%
+    );
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim),
+      0 0 0 1px var(--glass-line),
+      0 12px 32px -14px oklch(0.3 0.05 160 / 0.2);
+  }
+}
+
+/* Thicker glass for things that float over the page: menus, dialogs, tips. */
+@utility glass-strong {
+  background-color: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* The bright edge where light catches the glass: strongest along the top,
+   fading down the sides. The element needs a position (relative, fixed…). */
+@utility glass-rim {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      170deg,
+      var(--glass-rim),
+      transparent 35%,
+      transparent 75%,
+      color-mix(in oklch, var(--glass-rim) 40%, transparent)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+}
+
+/* Solid panels for people who ask for less transparency, and for browsers
+   that cannot blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--card);
+    --glass-strong: var(--popover);
+    --glass-blur: none;
+    --glass-sheen: transparent;
+    --sidebar: oklch(0.29 0.05 160);
+  }
+  .dark {
+    --sidebar: oklch(0.155 0.02 165);
+  }
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  :root {
+    --glass: color-mix(in oklch, var(--card) 94%, transparent);
+    --glass-strong: var(--popover);
   }
 }
 

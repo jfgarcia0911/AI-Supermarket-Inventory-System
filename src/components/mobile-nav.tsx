@@ -21,7 +21,10 @@ const ITEMS = [
   { href: "/counts", label: "Counts", icon: ClipboardCheckIcon },
 ];
 
-/** The phone's bottom bar: the everyday jobs, and "More" for everything else. */
+/**
+ * The phone's bottom bar, a glass dock floating above the page: the everyday
+ * jobs, and "More" for everything else.
+ */
 export function MobileNav() {
   // Reading the address waits for the request, so show the bar without a
   // highlighted tab until then.
@@ -56,7 +59,7 @@ function Bar({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_oklch(0.3_0.04_160/0.25)] backdrop-blur-md md:hidden"
+      className="glass-rim fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-20 flex rounded-2xl glass-strong px-1 shadow-[0_14px_34px_-12px_oklch(0.3_0.05_160/0.4)] ring-1 ring-(--glass-line) md:hidden"
     >
       {ITEMS.map((item) => (
         <Link

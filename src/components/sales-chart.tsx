@@ -119,7 +119,7 @@ export function SalesChart({ days }: { days: SalesDay[] }) {
                 {/* Hover and focus readout: the value first, the day second. */}
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 rounded-lg border bg-popover px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-md group-hover:block group-focus-visible:block"
+                  className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 rounded-lg border border-(--glass-line) glass-strong px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-lg group-hover:block group-focus-visible:block"
                 >
                   <div className="font-display text-sm font-semibold tabular-nums">
                     {d.status === "imported"

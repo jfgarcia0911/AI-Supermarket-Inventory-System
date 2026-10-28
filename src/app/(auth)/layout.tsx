@@ -36,7 +36,7 @@ export default function AuthLayout({
           <ul className="space-y-4">
             {POINTS.map((point) => (
               <li key={point.text} className="flex items-center gap-3">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-white/12">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-white/12 ring-1 ring-white/20 backdrop-blur-sm ring-inset">
                   <point.icon className="size-4" />
                 </span>
                 <span className="text-banner-foreground/85">{point.text}</span>

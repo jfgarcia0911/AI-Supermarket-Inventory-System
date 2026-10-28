@@ -14,9 +14,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      {/* Transparent, so the page's soft background shows through. */}
+      {/* Transparent, so the colour wash shows through the glass. */}
       <SidebarInset className="bg-transparent">
-        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border/70 bg-background/75 px-4 backdrop-blur-md">
+        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-(--glass-line) glass px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 md:hidden" />
           <Link
@@ -29,7 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             AI Supermarket
           </Link>
         </header>
-        <main className="rise-in mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 pb-24 md:p-8">
+        <main className="rise-in mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] md:p-8">
           {children}
         </main>
         <MobileNav />

@@ -342,7 +342,7 @@ async function Dashboard() {
   return (
     <>
       {/* The welcome banner: the day, a greeting and what needs doing. */}
-      <section className="awning relative overflow-hidden rounded-2xl px-6 py-7 text-banner-foreground shadow-[0_18px_40px_-24px_oklch(0.3_0.08_156/0.8)] sm:px-8">
+      <section className="awning glass-rim relative overflow-hidden rounded-2xl px-6 py-7 text-banner-foreground shadow-[0_18px_40px_-24px_oklch(0.3_0.08_156/0.8)] [--glass-rim:oklch(1_0_0/0.35)] sm:px-8">
         <StoreIcon
           aria-hidden
           className="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] text-white/[0.07]"
@@ -377,7 +377,7 @@ async function Dashboard() {
               {canEdit && (
                 <Button
                   variant="ghost"
-                  className="bg-white/12 text-banner-foreground hover:bg-white/20 hover:text-banner-foreground"
+                  className="bg-white/12 text-banner-foreground ring-1 ring-white/25 backdrop-blur-md ring-inset hover:bg-white/20 hover:text-banner-foreground"
                   render={<Link href="/imports/new?kind=sales" />}
                 >
                   <FileUpIcon />
@@ -387,7 +387,7 @@ async function Dashboard() {
               {user.role !== "viewer" && (
                 <Button
                   variant="ghost"
-                  className="bg-white/12 text-banner-foreground hover:bg-white/20 hover:text-banner-foreground"
+                  className="bg-white/12 text-banner-foreground ring-1 ring-white/25 backdrop-blur-md ring-inset hover:bg-white/20 hover:text-banner-foreground"
                   render={<Link href="/adjustments" />}
                 >
                   <Trash2Icon />

@@ -76,7 +76,7 @@ function navFor(role: AppRole, openAlerts: number): NavGroup[] {
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar variant="floating">
       <SidebarHeader className="pt-4 pb-2">
         <Link href="/" className="group flex items-center gap-3 px-2 py-1">
           <span className="flex size-10 shrink-0 rotate-[-4deg] items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_6px_16px_-6px_oklch(0.78_0.16_62/0.7)] transition-transform group-hover:rotate-0">
