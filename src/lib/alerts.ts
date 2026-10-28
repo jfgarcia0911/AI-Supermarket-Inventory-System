@@ -1,5 +1,6 @@
 // Words used for alerts across the app.
 
+import type { BadgeColour } from "@/lib/badge-colours";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Enums = Database["public"]["Enums"];
@@ -25,13 +26,10 @@ export const SEVERITY_LABELS: Record<AlertSeverity, string> = {
   info: "Info",
 };
 
-export const SEVERITY_BADGE: Record<
-  AlertSeverity,
-  "destructive" | "default" | "outline"
-> = {
+export const SEVERITY_BADGE: Record<AlertSeverity, BadgeColour> = {
   critical: "destructive",
-  warning: "default",
-  info: "outline",
+  warning: "warning",
+  info: "info",
 };
 
 const SEVERITY_ORDER: Record<AlertSeverity, number> = {

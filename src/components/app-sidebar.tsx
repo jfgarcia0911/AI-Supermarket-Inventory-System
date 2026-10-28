@@ -16,35 +16,52 @@ import { getCurrentUser } from "@/lib/auth";
 import { type AppRole, isOwner, ROLE_LABELS } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
+/** The menu, grouped by the job: today's work, the stock, and the office. */
 function navFor(role: AppRole, openAlerts: number): NavGroup[] {
   const staff = role === "staff";
-  const shop: NavGroup = {
-    label: "Shop",
-    items: [
-      { href: "/", label: "Dashboard", icon: "dashboard" },
-      { href: "/scan", label: "Scan", icon: "scan" },
-      { href: "/deliveries", label: "Deliveries", icon: "deliveries" },
-      { href: "/stock", label: "Stock", icon: "stock" },
-      { href: "/counts", label: "Counts", icon: "counts" },
-      {
-        href: "/adjustments",
-        label: "Waste & adjustments",
-        icon: "adjustments",
-      },
-      { href: "/alerts", label: "Alerts", icon: "alerts", badge: openAlerts },
-      { href: "/products", label: "Products", icon: "products" },
-      { href: "/categories", label: "Categories", icon: "categories" },
-      { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
-    ],
-  };
+  const groups: NavGroup[] = [
+    {
+      label: "Today",
+      items: [
+        { href: "/", label: "Dashboard", icon: "dashboard" },
+        { href: "/scan", label: "Scan", icon: "scan" },
+        { href: "/deliveries", label: "Deliveries", icon: "deliveries" },
+        ...(staff
+          ? []
+          : [{ href: "/sales", label: "Sales", icon: "sales" } as const]),
+        { href: "/counts", label: "Counts", icon: "counts" },
+        {
+          href: "/adjustments",
+          label: "Waste & adjustments",
+          icon: "adjustments",
+        },
+      ],
+    },
+    {
+      label: "Stock",
+      items: [
+        { href: "/stock", label: "Stock", icon: "stock" },
+        {
+          href: "/alerts",
+          label: "Alerts",
+          icon: "alerts",
+          badge: openAlerts,
+        },
+        { href: "/products", label: "Products", icon: "products" },
+        { href: "/categories", label: "Categories", icon: "categories" },
+        { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
+      ],
+    },
+  ];
   if (!staff) {
-    shop.items.splice(3, 0, { href: "/sales", label: "Sales", icon: "sales" });
-    shop.items.push(
-      { href: "/reports", label: "Reports", icon: "reports" },
-      { href: "/imports", label: "Imports", icon: "imports" },
-    );
+    groups.push({
+      label: "Office",
+      items: [
+        { href: "/reports", label: "Reports", icon: "reports" },
+        { href: "/imports", label: "Imports", icon: "imports" },
+      ],
+    });
   }
-  const groups = [shop];
   if (isOwner(role)) {
     groups.push({
       label: "Admin",
@@ -60,17 +77,16 @@ function navFor(role: AppRole, openAlerts: number): NavGroup[] {
 export function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader>
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-2 py-1.5 font-semibold"
-        >
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <StoreIcon className="size-4" />
+      <SidebarHeader className="pt-4 pb-2">
+        <Link href="/" className="group flex items-center gap-3 px-2 py-1">
+          <span className="flex size-10 shrink-0 rotate-[-4deg] items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_6px_16px_-6px_oklch(0.78_0.16_62/0.7)] transition-transform group-hover:rotate-0">
+            <StoreIcon className="size-5" />
           </span>
-          <span className="leading-tight">
-            AI Supermarket
-            <span className="block text-xs font-normal text-muted-foreground">
+          <span className="leading-none">
+            <span className="block font-display text-lg font-semibold tracking-[-0.01em]">
+              AI Supermarket
+            </span>
+            <span className="mt-1 block text-[0.7rem] font-medium tracking-[0.18em] text-sidebar-foreground/60 uppercase">
               Inventory
             </span>
           </span>
@@ -116,31 +132,50 @@ async function RoleNav() {
   return <NavLinks groups={navFor(user?.role ?? "staff", openAlerts)} />;
 }
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
 async function UserFooter() {
   const user = await getCurrentUser();
   if (!user) {
     return null;
   }
   return (
-    <div className="space-y-2 rounded-md border bg-background p-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{user.fullName}</p>
-        <p className="text-xs text-muted-foreground">
-          {ROLE_LABELS[user.role]}
-        </p>
+    <div className="space-y-3 rounded-xl bg-sidebar-accent/70 p-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/15 font-display text-sm font-semibold">
+          {initials(user.fullName)}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{user.fullName}</p>
+          <p className="text-xs text-sidebar-foreground/65">
+            {ROLE_LABELS[user.role]}
+          </p>
+        </div>
       </div>
       <div className="flex gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="flex-1"
+          className="flex-1 bg-sidebar-foreground/10 text-sidebar-foreground hover:bg-sidebar-foreground/20 hover:text-sidebar-accent-foreground"
           render={<Link href="/account" />}
         >
           <UserRoundIcon />
           Account
         </Button>
         <form action={signOut} className="flex-1">
-          <Button type="submit" variant="ghost" size="sm" className="w-full">
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            className="w-full text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-accent-foreground"
+          >
             <LogOutIcon />
             Sign out
           </Button>

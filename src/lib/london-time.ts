@@ -72,3 +72,28 @@ export function dateToLondonLocal(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
 }
+
+const LONDON_HOUR = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  hour: "numeric",
+  hourCycle: "h23",
+});
+const LONDON_LONG_DATE = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+/** "Good morning", "Good afternoon" or "Good evening", by UK time. */
+export function londonGreeting(now: Date): string {
+  const hour = Number(LONDON_HOUR.format(now));
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+/** "Wednesday 28 October", by UK time. */
+export function londonLongDate(now: Date): string {
+  return LONDON_LONG_DATE.format(now);
+}

@@ -171,7 +171,7 @@ async function Deliveries({
                   <TableCell className="text-right tabular-nums">
                     {formatQuantity(d.units_received)}
                     <div className="text-xs text-muted-foreground">
-                      {d.line_count} lines
+                      {d.line_count} {d.line_count === 1 ? "line" : "lines"}
                     </div>
                   </TableCell>
                   {showCosts && (

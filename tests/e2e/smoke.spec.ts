@@ -25,7 +25,9 @@ test("a wrong password is refused with a clear message", async ({ page }) => {
 test("the owner can browse products, costs and users", async ({ page }) => {
   await signIn(page, "owner@example.com");
   await expect(
-    page.getByRole("heading", { name: "Hello, Demo" }),
+    page.getByRole("heading", {
+      name: /Good (morning|afternoon|evening), Demo/,
+    }),
   ).toBeVisible();
   await expect(page.getByText("Stock value")).toBeVisible();
   await expect(page.getByText("Waiting for you")).toBeVisible();

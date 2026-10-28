@@ -1,5 +1,6 @@
 // Words and shapes used for till sales across the app.
 
+import type { BadgeColour } from "@/lib/badge-colours";
 import { formatDate } from "@/lib/format";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -11,12 +12,9 @@ export const SALES_LINE_LABELS: Record<SalesLineStatus, string> = {
   ignored: "Ignored",
 };
 
-export const SALES_LINE_BADGE: Record<
-  SalesLineStatus,
-  "secondary" | "destructive" | "outline"
-> = {
-  matched: "secondary",
-  unmatched: "destructive",
+export const SALES_LINE_BADGE: Record<SalesLineStatus, BadgeColour> = {
+  matched: "success",
+  unmatched: "warning",
   ignored: "outline",
 };
 

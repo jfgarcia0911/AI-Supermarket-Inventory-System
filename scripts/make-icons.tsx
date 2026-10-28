@@ -13,8 +13,9 @@ const STORE_PATHS = [
   "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05",
 ];
 
-// The app's primary colour (--primary in globals.css).
-const BACKGROUND = "#171717";
+// The app's grocer green (--primary in globals.css) and paper cream.
+const BACKGROUND = "#18623c";
+const SHAPE = "#fbf9f2";
 
 /** `inset` is the empty border around the shape, as a share of the size. */
 async function draw(size: number, inset: number, file: string) {
@@ -35,7 +36,7 @@ async function draw(size: number, inset: number, file: string) {
         height={glyph}
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#ffffff"
+        stroke={SHAPE}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"

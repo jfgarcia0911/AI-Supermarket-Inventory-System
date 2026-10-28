@@ -2615,6 +2615,15 @@ export type Database = {
           with_difference: number
         }[]
       }
+      report_daily_sales: {
+        Args: { p_days?: number }
+        Returns: {
+          day: string
+          gross_sales: number
+          items_sold: number
+          status: string
+        }[]
+      }
       report_deliveries_by_supplier: {
         Args: { p_from: string; p_to: string }
         Returns: {

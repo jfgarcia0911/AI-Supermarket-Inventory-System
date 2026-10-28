@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { dateToLondonLocal, londonLocalToDate } from "./london-time";
+import {
+  dateToLondonLocal,
+  londonGreeting,
+  londonLocalToDate,
+  londonLongDate,
+} from "./london-time";
 
 describe("londonLocalToDate", () => {
   it("reads winter times as GMT", () => {
@@ -49,5 +54,24 @@ describe("dateToLondonLocal", () => {
     ]) {
       expect(dateToLondonLocal(londonLocalToDate(local) as Date)).toBe(local);
     }
+  });
+});
+
+describe("londonGreeting", () => {
+  it("greets by the time in the UK, not the server's", () => {
+    // 11:30 UTC on 28 Oct 2026 is 11:30 GMT (morning).
+    expect(londonGreeting(new Date("2026-10-28T11:30:00Z"))).toBe(
+      "Good morning",
+    );
+    // 11:30 UTC on 1 Aug 2026 is 12:30 BST (afternoon).
+    expect(londonGreeting(new Date("2026-08-01T11:30:00Z"))).toBe(
+      "Good afternoon",
+    );
+    expect(londonGreeting(new Date("2026-10-28T19:00:00Z"))).toBe(
+      "Good evening",
+    );
+    expect(londonLongDate(new Date("2026-10-28T23:30:00Z"))).toBe(
+      "Wednesday 28 October",
+    );
   });
 });

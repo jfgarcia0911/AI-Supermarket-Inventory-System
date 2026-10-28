@@ -1078,6 +1078,14 @@ categories ─&lt; products ─&lt; product_barcodes
     <li><strong>Sales:</strong> a missing day can be marked as a day the shop was closed (and undone).</li>
   </ul>
 
+  <h3>Look and feel (28 Oct 2026)</h3>
+  <ul>
+    <li><strong>A fresh-market style:</strong> a deep grocer's green for the brand and the sidebar, citrus orange for the few things that should catch the eye, and a warm paper-cream background. Headings and big numbers use Fraunces, a soft serif; everything else uses Figtree, which stays easy to read in dense tables. Dark mode has its own matching colours.</li>
+    <li><strong>Status colours mean the same everywhere:</strong> green for done, amber for waiting on someone, blue for information or in progress, red for problems.</li>
+    <li><strong>Dashboard:</strong> a welcome banner with the day and what needs attention, colour-coded figures, a chart of the last 14 days' till sales (missing days drawn as dashed placeholders; the numbers are also available as a table), alerts, and the to-do list. Stock staff get large task tiles.</li>
+    <li><strong>Sign-in page:</strong> a green brand panel beside the form on wide screens.</li>
+  </ul>
+
   <h3>How imports work</h3>
   <ul>
     <li><strong>Four kinds in Release 1 so far:</strong> <em>Daily sales</em> (Phase 3: date, item code, quantity sold, and optionally the description and sales value; day/month/year dates and Excel dates are both understood, and the columns chosen are remembered for the next file), <em>Opening stock</em> (Phase 2: barcode or till code, quantity counted and an optional unit cost, plus when the count happened), <em>Products</em> (category, name, brand, size, sold by, VAT, selling price, barcode, case barcode and size, till code, reorder levels) and <em>Supplier price list</em> (the supplier's code and description, our product's barcode or till code, units per case, case cost before VAT, preferred yes/no). If a price list covers several suppliers, rows for the other suppliers are left out.</li>

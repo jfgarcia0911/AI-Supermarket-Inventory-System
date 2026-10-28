@@ -1,5 +1,6 @@
 // Words used for deliveries across the app.
 
+import type { BadgeColour } from "@/lib/badge-colours";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Enums = Database["public"]["Enums"];
@@ -14,13 +15,10 @@ export const STATUS_LABELS: Record<DeliveryStatus, string> = {
   void: "Void",
 };
 
-export const STATUS_BADGE: Record<
-  DeliveryStatus,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  draft: "outline",
-  checked_in: "default",
-  posted: "secondary",
+export const STATUS_BADGE: Record<DeliveryStatus, BadgeColour> = {
+  draft: "info",
+  checked_in: "warning",
+  posted: "success",
   void: "destructive",
 };
 

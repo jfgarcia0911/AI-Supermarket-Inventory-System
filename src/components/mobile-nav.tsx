@@ -44,14 +44,19 @@ function Bar({ pathname }: { pathname: string | null }) {
     (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const itemClass = (on: boolean) =>
     cn(
-      "flex flex-1 flex-col items-center gap-0.5 py-2 text-xs",
-      on ? "font-medium text-foreground" : "text-muted-foreground",
+      "group flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[0.7rem]",
+      on ? "font-semibold text-primary" : "text-muted-foreground",
+    );
+  const iconClass = (on: boolean) =>
+    cn(
+      "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+      on ? "bg-secondary" : "group-active:bg-muted",
     );
 
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_oklch(0.3_0.04_160/0.25)] backdrop-blur-md md:hidden"
     >
       {ITEMS.map((item) => (
         <Link
@@ -60,7 +65,9 @@ function Bar({ pathname }: { pathname: string | null }) {
           className={itemClass(active(item.href))}
           aria-current={active(item.href) ? "page" : undefined}
         >
-          <item.icon className="size-5" />
+          <span className={iconClass(active(item.href))}>
+            <item.icon className="size-5" />
+          </span>
           {item.label}
         </Link>
       ))}
@@ -69,7 +76,9 @@ function Bar({ pathname }: { pathname: string | null }) {
         className={itemClass(false)}
         onClick={() => setOpenMobile(true)}
       >
-        <MenuIcon className="size-5" />
+        <span className={iconClass(false)}>
+          <MenuIcon className="size-5" />
+        </span>
         More
       </button>
     </nav>

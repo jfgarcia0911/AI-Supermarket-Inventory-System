@@ -78,6 +78,13 @@ Playwright. Node 24 LTS (`.nvmrc`); supabase-js does not run on Node 20.
 - Reports are database functions (`report_*`) because of the 1,000-row API
   limit; `/reports/export` turns them into CSV, paging through with
   `.range()`.
+- Look and feel: colours are tokens in `src/app/globals.css` (grocer green
+  `primary`, `citrus` for highlights, `*-soft`/`*-ink` pairs for status, and
+  `banner` for the green panels in both themes). Use the Badge variants
+  `success`/`warning`/`info`/`citrus`/`destructive` for statuses, `PageHeader`
+  for page titles, and `font-display` (Fraunces) for big numbers. Chart colours
+  (`--chart-*`) were checked with the dataviz palette validator; re-check any
+  change.
 - `src/components/product-search.tsx` finds products by supplier code,
   barcode, till code or name; a single code match is chosen straight away so a
   scanner works like a keyboard.

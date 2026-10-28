@@ -17,9 +17,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">Sign in</CardTitle>
+        <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
-          Use the email and password the shop owner gave you.
+          Sign in with the email and password the shop owner gave you.
         </CardDescription>
       </CardHeader>
       <CardContent>

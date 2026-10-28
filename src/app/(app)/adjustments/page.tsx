@@ -40,6 +40,13 @@ const STATUS_LABELS = {
   rejected: "Rejected",
 } as const;
 
+const STATUS_BADGE = {
+  auto_approved: "success",
+  pending: "warning",
+  approved: "success",
+  rejected: "outline",
+} as const;
+
 const ADJUSTMENT_FIELDS =
   "id, quantity, note, status, requested_at, decided_at, store_id, product:products(id, name, sold_by), reason:adjustment_reasons(name), requester:profiles!stock_adjustments_requested_by_fkey(full_name)";
 
@@ -285,11 +292,7 @@ async function Adjustments({
                       {quantityText(a.quantity, a.product?.sold_by)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge
-                        variant={
-                          a.status === "rejected" ? "outline" : "secondary"
-                        }
-                      >
+                      <Badge variant={STATUS_BADGE[a.status]}>
                         {STATUS_LABELS[a.status]}
                       </Badge>
                     </TableCell>

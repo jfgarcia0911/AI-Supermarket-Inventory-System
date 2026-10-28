@@ -4,12 +4,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * The look: a fresh-market grocer's. Deep green like a shop awning, a warm
+ * paper-cream background, and citrus orange for the few things that should
+ * catch the eye. Headings and big numbers use Fraunces, a soft serif; the
+ * rest uses Figtree, which stays easy to read in dense tables.
+ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +47,19 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-citrus: var(--citrus);
+  --color-citrus-foreground: var(--citrus-foreground);
+  --color-citrus-soft: var(--citrus-soft);
+  --color-citrus-ink: var(--citrus-ink);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+  --color-danger-soft: var(--danger-soft);
+  --color-banner: var(--banner);
+  --color-banner-foreground: var(--banner-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,82 +70,203 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.982 0.01 95);
+  --foreground: oklch(0.24 0.03 160);
+  --card: oklch(0.997 0.004 95);
+  --card-foreground: oklch(0.24 0.03 160);
+  --popover: oklch(0.997 0.004 95);
+  --popover-foreground: oklch(0.24 0.03 160);
+  --primary: oklch(0.44 0.095 156);
+  --primary-foreground: oklch(0.985 0.012 95);
+  --secondary: oklch(0.945 0.028 150);
+  --secondary-foreground: oklch(0.32 0.07 157);
+  --muted: oklch(0.955 0.013 95);
+  --muted-foreground: oklch(0.49 0.022 150);
+  --accent: oklch(0.945 0.028 150);
+  --accent-foreground: oklch(0.3 0.06 157);
+  --destructive: oklch(0.56 0.2 28);
+  --border: oklch(0.9 0.015 95);
+  --input: oklch(0.875 0.017 95);
+  --ring: oklch(0.6 0.11 155);
+  --citrus: oklch(0.76 0.16 58);
+  --citrus-foreground: oklch(0.27 0.06 45);
+  --citrus-soft: oklch(0.94 0.055 70);
+  --citrus-ink: oklch(0.47 0.13 48);
+  --success-soft: oklch(0.935 0.05 150);
+  --success-ink: oklch(0.39 0.1 153);
+  --warning-soft: oklch(0.945 0.07 88);
+  --warning-ink: oklch(0.46 0.11 68);
+  --info-soft: oklch(0.94 0.03 240);
+  --info-ink: oklch(0.42 0.1 248);
+  --danger-soft: oklch(0.94 0.04 25);
+  /* Brand panels stay deep green in both light and dark mode. */
+  --banner: oklch(0.44 0.095 156);
+  --banner-foreground: oklch(0.985 0.012 95);
+  /* Chart marks are checked for contrast and colour-blind safety. */
+  --chart-1: oklch(0.48 0.12 154);
+  --chart-2: oklch(0.76 0.16 58);
+  --chart-3: oklch(0.72 0.09 150);
+  --chart-4: oklch(0.82 0.13 88);
+  --chart-5: oklch(0.56 0.1 248);
+  --radius: 0.7rem;
+  --sidebar: oklch(0.29 0.05 160);
+  --sidebar-foreground: oklch(0.92 0.025 120);
+  --sidebar-primary: oklch(0.78 0.16 62);
+  --sidebar-primary-foreground: oklch(0.25 0.05 45);
+  --sidebar-accent: oklch(0.355 0.058 160);
+  --sidebar-accent-foreground: oklch(0.985 0.01 95);
+  --sidebar-border: oklch(0.37 0.045 160);
+  --sidebar-ring: oklch(0.78 0.16 62);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.185 0.02 165);
+  --foreground: oklch(0.95 0.012 95);
+  --card: oklch(0.225 0.024 165);
+  --card-foreground: oklch(0.95 0.012 95);
+  --popover: oklch(0.225 0.024 165);
+  --popover-foreground: oklch(0.95 0.012 95);
+  --primary: oklch(0.74 0.13 152);
+  --primary-foreground: oklch(0.2 0.035 160);
+  --secondary: oklch(0.29 0.035 160);
+  --secondary-foreground: oklch(0.9 0.04 150);
+  --muted: oklch(0.27 0.025 162);
+  --muted-foreground: oklch(0.72 0.022 140);
+  --accent: oklch(0.3 0.036 160);
+  --accent-foreground: oklch(0.95 0.012 95);
+  --destructive: oklch(0.7 0.18 25);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.6 0.1 152);
+  --citrus: oklch(0.78 0.15 60);
+  --citrus-foreground: oklch(0.22 0.05 45);
+  --citrus-soft: oklch(0.33 0.07 55);
+  --citrus-ink: oklch(0.86 0.11 65);
+  --success-soft: oklch(0.31 0.06 152);
+  --success-ink: oklch(0.86 0.1 150);
+  --warning-soft: oklch(0.33 0.06 80);
+  --warning-ink: oklch(0.88 0.11 88);
+  --info-soft: oklch(0.31 0.05 245);
+  --info-ink: oklch(0.85 0.07 240);
+  --danger-soft: oklch(0.32 0.07 25);
+  --banner: oklch(0.36 0.075 158);
+  --banner-foreground: oklch(0.97 0.012 95);
+  --chart-1: oklch(0.62 0.13 153);
+  --chart-2: oklch(0.78 0.15 60);
+  --chart-3: oklch(0.6 0.08 150);
+  --chart-4: oklch(0.85 0.12 90);
+  --chart-5: oklch(0.7 0.09 245);
+  --sidebar: oklch(0.155 0.02 165);
+  --sidebar-foreground: oklch(0.9 0.02 120);
+  --sidebar-primary: oklch(0.78 0.15 60);
+  --sidebar-primary-foreground: oklch(0.22 0.05 45);
+  --sidebar-accent: oklch(0.24 0.03 162);
+  --sidebar-accent-foreground: oklch(0.97 0.01 95);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.78 0.15 60);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* A faint green glow from the top, like light through a shop window. */
+    background-image:
+      radial-gradient(
+        ellipse 80% 50% at 15% -10%,
+        color-mix(in oklch, var(--primary) 7%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 100% 0%,
+        color-mix(in oklch, var(--citrus) 6%, transparent),
+        transparent 70%
+      );
+    background-attachment: fixed;
+    font-feature-settings: "ss01";
+  }
+  /* Paper grain, too faint to notice until it is gone. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .dark body::before {
+    opacity: 0.05;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 50;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 50;
+    font-feature-settings: "lnum", "tnum";
+  }
+
+  /* Page content rises in gently when a page opens. */
+  .rise-in > * {
+    animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .rise-in > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  .rise-in > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .rise-in > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  .rise-in > *:nth-child(5) {
+    animation-delay: 200ms;
+  }
+  .rise-in > *:nth-child(n + 6) {
+    animation-delay: 240ms;
+  }
+
+  /* A soft diagonal pattern for brand panels. */
+  .awning {
+    background-image:
+      repeating-linear-gradient(
+        135deg,
+        color-mix(in oklch, white 6%, transparent) 0 14px,
+        transparent 14px 28px
+      ),
+      linear-gradient(
+        135deg,
+        var(--banner),
+        color-mix(in oklch, var(--banner), black 28%)
+      );
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in > * {
+    animation: none;
   }
 }

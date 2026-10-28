@@ -1,5 +1,6 @@
 // Words used for stock counts across the app.
 
+import type { BadgeColour } from "@/lib/badge-colours";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Enums = Database["public"]["Enums"];
@@ -28,14 +29,11 @@ export const COUNT_STATUS_LABELS: Record<CountStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export const COUNT_STATUS_BADGE: Record<
-  CountStatus,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  in_progress: "outline",
-  submitted: "default",
-  approved: "secondary",
-  cancelled: "destructive",
+export const COUNT_STATUS_BADGE: Record<CountStatus, BadgeColour> = {
+  in_progress: "info",
+  submitted: "warning",
+  approved: "success",
+  cancelled: "outline",
 };
 
 /** Where stock is kept; counting each place separately avoids mistakes. */
